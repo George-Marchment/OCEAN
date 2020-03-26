@@ -7,7 +7,15 @@ from sklearn.feature_selection import chi2
 from sklearn.feature_selection import SelectKBest
 from sklearn.decomposition import PCA
 from sklearn.neighbors import LocalOutlierFactor
-# import pandas as pd
+
+import pandas as pd
+from sklearn.feature_selection import VarianceThreshold
+import time
+from sklearn.tree import DecisionTreeClassifier
+from model import model
+from data_manager import DataManager
+from libscores import get_metric
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 sns.set()
 model_dir = 'sample_code_submission/'
@@ -127,6 +135,73 @@ def featureSelection(D, show=True):
         print(D.data['X_test'].shape)
 
 
+def get_precision_and_time_for_various_threshold(visible, threVals):
+    metric_name, scoring_function = get_metric()
+    idx = -1
+    res = [[i, 0, 0, 0]for i in threVals]
+    D = DataManager(data_name, data_dir, replace_missing=True)
+    basicX = pd.DataFrame(D.data['X_train'])
+
+    Y = D.data['Y_train']
+    for var in threVals:
+        idx += 1
+        sel = VarianceThreshold(threshold=(var))
+        X = pd.DataFrame(data=sel.fit_transform(basicX))
+        alreadyDone = False
+        for i in res[:idx]:
+            if X.shape[1] == i[3]:
+                res[idx][:] = i[:]
+                res[idx][0] = var
+                alreadyDone = True
+                if (visible):
+                    print(i, "=", X.shape)
+                continue
+        res[idx][3] = X.shape[1]
+        if alreadyDone:
+            continue
+        if (visible):
+            print("number of features after varThreshold = %d" % X.shape[1])
+        M = DecisionTreeClassifier(max_depth=10, max_features='sqrt', random_state=42)
+        start = time.process_time()
+        M.fit(X, Y)
+        res[idx][2] = time.process_time() - start
+        # result_name = result_dir + data_name
+        Y_hat = M.predict(X)
+        if (visible):
+            print(Y, " ", Y_hat)
+        res[idx][1] = scoring_function(Y, Y_hat)
+    return res
+
+
+def graph_threshold_changes(visible=False, thresholdValues=np.linspace(0.001, 0.05, 10), n=1):
+    moy = np.array(get_precision_and_time_for_various_threshold(visible, thresholdValues))
+    i = n-1
+    while i > 0:
+        toAdd = np.array(get_precision_and_time_for_various_threshold(visible, thresholdValues))
+        moy += toAdd
+        i -= 1
+    moy /= n
+    fig, ax = plt.subplots(2, 2, figsize=(10, 8))
+    ax[0][0].plot(moy[:, 0], moy[:, 1])
+    ax[0][0].set_xlabel("variance threshold")
+    ax[0][0].set_ylabel("roc score")
+    ax[0][0].legend()
+    ax[0][1].plot(moy[:, 0], moy[:, 2])
+    ax[0][1].set_xlabel("variance threshold")
+    ax[0][1].set_ylabel("time of execution")
+    ax[0][1].legend()
+    ax[1][0].plot(moy[:, 0], moy[:, 3])
+    ax[1][0].set_xlabel("variance threshold")
+    ax[1][0].set_ylabel("feature number")
+    ax[1][0].legend()
+    ax[1][1].plot(moy[:, 1], moy[:, 2])
+    ax[1][1].set_xlabel("roc score")
+    ax[1][1].set_ylabel("time of execution")
+    ax[1][1].legend()
+    fig.show()
+
+
+# graph_threshold_changes(thresholdValues=np.linspace(0.0001, 0.076, 90), n=5)
 featureSelection(D)
 PCAlg(D)
 removeOutliners(D)
