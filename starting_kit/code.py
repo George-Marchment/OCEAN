@@ -1,37 +1,25 @@
-from sys import path
 import seaborn as sns
-import warnings
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import warnings
+import time
+
 from sklearn.feature_selection import chi2
 from sklearn.feature_selection import SelectKBest
 from sklearn.decomposition import PCA
 from sklearn.neighbors import LocalOutlierFactor
-
-import pandas as pd
 from sklearn.feature_selection import VarianceThreshold
-import time
 from sklearn.tree import DecisionTreeClassifier
-from model import model
-from data_manager import DataManager
+import path
+from data_io import read_as_df
 from libscores import get_metric
-
+from data_manager import DataManager
 warnings.simplefilter(action='ignore', category=FutureWarning)
 sns.set()
-model_dir = 'sample_code_submission/'
-result_dir = 'sample_result_submission/'
-problem_dir = 'ingestion_program/'
-score_dir = 'scoring_program/'
-path.append(model_dir)
-path.append(problem_dir)
-path.append(score_dir)
-# let those libraries after path because libraries are inside the path
-from data_io import read_as_df
-from data_manager import DataManager
 
 # The sample_data directory should contain only a very small subset of the data
 data_dir = './public_data'
-raw_data_dir = './public_data_raw'
 data_name = 'plankton'
 
 # The data are loaded as a Pandas Data Frame
@@ -42,7 +30,7 @@ D = DataManager(data_name, data_dir, replace_missing=True)
 print(D)
 
 
-def removeOutliners(D, threshold=-1.7,  show=True):
+def removeOutliners(D, threshold=-1.7, show=True):
     X = D.data['X_train']
     clf = LocalOutlierFactor(n_neighbors=7)
     clf.fit_predict(X)
@@ -54,7 +42,7 @@ def removeOutliners(D, threshold=-1.7,  show=True):
         print("min is ", min(clf.negative_outlier_factor_))
 
         ax.plot(clf.negative_outlier_factor_, 'b.', label="data")
-        ax.plot(threshold*np.ones(X.shape[0]), 'r', label="threshold= {}".format(threshold))
+        ax.plot(threshold * np.ones(X.shape[0]), 'r', label="threshold= {}".format(threshold))
         ax.legend()
         ax.set_title("Representation of all points with outliners (under the threshold)")
         ax.set_xlabel("data")
@@ -100,11 +88,11 @@ def featureSelection(D, show=True):
 
     threshold = 0.008
 
-    score, pvalue = chi2(D.data['X_train'], D.data['Y_train'])[0],  chi2(D.data['X_train'], D.data['Y_train'])[1]
+    score, pvalue = chi2(D.data['X_train'], D.data['Y_train'])[0], chi2(D.data['X_train'], D.data['Y_train'])[1]
 
     if show:
         ax[0].plot(pvalue, 'b.', label="p-values of each feature")
-        ax[0].plot(threshold*np.ones(len(score)), 'r', label="threshold= {}".format(threshold))
+        ax[0].plot(threshold * np.ones(len(score)), 'r', label="threshold= {}".format(threshold))
         ax[1].plot(score, 'b.', label="chi2 statistics of each feature")
 
         ax[0].legend()
@@ -175,7 +163,7 @@ def get_precision_and_time_for_various_threshold(visible, threVals):
 
 def graph_threshold_changes(visible=False, thresholdValues=np.linspace(0.001, 0.05, 10), n=1):
     moy = np.array(get_precision_and_time_for_various_threshold(visible, thresholdValues))
-    i = n-1
+    i = n - 1
     while i > 0:
         toAdd = np.array(get_precision_and_time_for_various_threshold(visible, thresholdValues))
         moy += toAdd
