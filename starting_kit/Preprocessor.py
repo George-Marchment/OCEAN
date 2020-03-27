@@ -289,6 +289,16 @@ class Preprocessor(BaseEstimator):
         ax[1][1].legend()
         fig.show()
 
+    # TODO 
+    def get_params(self, deep=True):
+        # suppose this estimator has parameters "alpha" and "recursive"
+        return {"alpha": self.alpha, "recursive": self.recursive}
+
+    def set_params(self, **parameters):
+        for parameter, value in parameters.items():
+            setattr(self, parameter, value)
+        return self
+
 
 if __name__ == "__main__":
     # We can use this to run this file as a script and test the Preprocessor
