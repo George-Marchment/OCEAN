@@ -9,6 +9,8 @@ This class aim to automate the preprocessing chain.
 Briefly, it will extract features from a set of data... TODO
 """
 
+# what we aim : https://scikit-learn.org/stable/developers/develop.html#apis-of-scikit-learn-objects
+
 import warnings
 import path
 from data_io import read_as_df
@@ -23,7 +25,6 @@ from sklearn.feature_selection import VarianceThreshold
 from sklearn.tree import DecisionTreeClassifier
 import seaborn as sns
 from PIL import Image
-from matplotlib import pyplot
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -43,8 +44,10 @@ with warnings.catch_warnings():
 class Preprocessor(BaseEstimator):
 
     def __init__(self):
+        self.show = False
         self.fited = False
-        self.transformer = [PCA(n_components=70)]
+        self.n_components = 70
+        self.transformer = [PCA(self.n_components)]
 
     def extract_features(self):
         ...
@@ -135,52 +138,16 @@ class Preprocessor(BaseEstimator):
         pyplot.imshow(np.vectorize(f)(der))
         der = (np.vectorize(f)(der)).ravel()
         return sum(der) / len(der)
+    """
 
-    def _removeOutliners(D, threshold=-1.7, show=False):
-        X = D.data['X_train']
-        clf = LocalOutlierFactor(n_neighbors=7)
-        clf.fit_predict(X)
-        if show:
-            fig, ax = plt.subplots(1, 1, figsize=(15, 15))
-
-            print(clf.negative_outlier_factor_)
-            print("max is ", max(clf.negative_outlier_factor_))
-            print("min is ", min(clf.negative_outlier_factor_))
-
-            ax.plot(clf.negative_outlier_factor_, 'b.', label="data")
-            ax.plot(threshold * np.ones(X.shape[0]), 'r', label="threshold= {}".format(threshold))
-            ax.legend()
-            ax.set_title("Representation of all points with outliners (under the threshold)")
-            ax.set_xlabel("data")
-            ax.set_ylabel("outliners")
-            plt.show(fig)
-
-        # save all indexes where clf.negative_outlier_factor_ is under the threshold
-        arr = clf.negative_outlier_factor_.copy()
-        idxToDelete = []
-        for i in range(0, len(arr)):
-            if (arr[i]) < threshold:
-                idxToDelete += [i]
-
-        # delete the outliners on X and Y
-
-        if show:
-            print(D.data['X_train'].shape)
-            print(D.data['Y_train'].shape)
-
-        D.data['X_train'] = np.delete(D.data['X_train'], idxToDelete, axis=0)
-        D.data['Y_train'] = np.delete(D.data['Y_train'], idxToDelete, axis=0)
-
-        if show:
-            print(D.data['X_train'].shape)
-            print(D.data['Y_train'].shape)
+    def _removeOutliners(self, X):
         """
-
-    def removeOutliners(D, threshold=-1.7, show=True):
-        X = D.data['X_train']
         clf = LocalOutlierFactor(n_neighbors=7)
+        """
+        self.threshold = -1.7
+        clf = LocalOutlierFactor()
         clf.fit_predict(X)
-        if show:
+        if self.show:
             fig, ax = plt.subplots(1, 1, figsize=(15, 15))
 
             print(clf.negative_outlier_factor_)
@@ -188,7 +155,7 @@ class Preprocessor(BaseEstimator):
             print("min is ", min(clf.negative_outlier_factor_))
 
             ax.plot(clf.negative_outlier_factor_, 'b.', label="data")
-            ax.plot(threshold * np.ones(X.shape[0]), 'r', label="threshold= {}".format(threshold))
+            ax.plot(self.threshold * np.ones(X.shape[0]), 'r', label="self.threshold= {}".format(self.threshold))
             ax.legend()
             ax.set_title("Representation of all points with outliners (under the threshold)")
             ax.set_xlabel("data")
@@ -199,30 +166,26 @@ class Preprocessor(BaseEstimator):
         arr = clf.negative_outlier_factor_.copy()
         idxToDelete = []
         for i in range(0, len(arr)):
-            if (arr[i]) < threshold:
+            if (arr[i]) < self.threshold:
                 idxToDelete += [i]
 
         # delete the outliners on X and Y
 
-        if show:
+        if self.show:
             print(D.data['X_train'].shape)
             print(D.data['Y_train'].shape)
 
         D.data['X_train'] = np.delete(D.data['X_train'], idxToDelete, axis=0)
         D.data['Y_train'] = np.delete(D.data['Y_train'], idxToDelete, axis=0)
 
-        if show:
+        if self.show:
             print(D.data['X_train'].shape)
             print(D.data['Y_train'].shape)
 
+    def _featureSelection(self, D, threshold=0.008):
 
-
-
-    def _featureSelection(D, show=False, threshold=0.008):
-
-        score, pvalue = chi2(D.data['X_train'], D.data['Y_train'])[0], chi2(D.data['X_train'], D.data['Y_train'])[1]
-
-        if show:
+        if self.show:
+            score, pvalue = chi2(D.data['X_train'], D.data['Y_train'])[0], chi2(D.data['X_train'], D.data['Y_train'])[1]
             fig, ax = plt.subplots(2, 1, figsize=(20, 10))
             ax[0].plot(pvalue, 'b.', label="p-values of each feature")
             ax[0].plot(threshold * np.ones(len(score)), 'r', label="threshold= {}".format(threshold))
@@ -250,12 +213,12 @@ class Preprocessor(BaseEstimator):
         D.data['X_train'] = feature_selection.transform(D.data['X_train'])
         D.data['X_valid'] = feature_selection.transform(D.data['X_valid'])
         D.data['X_test'] = feature_selection.transform(D.data['X_test'])
-        if show:
+        if self.show:
             print(D.data['X_train'].shape)
             print(D.data['X_valid'].shape)
             print(D.data['X_test'].shape)
 
-    def get_precision_and_time_for_various_threshold(visible, threVals):
+    def _get_precision_and_time_for_various_threshold(visible, threVals):
         metric_name, scoring_function = get_metric()
         idx = -1
         res = [[i, 0, 0, 0]for i in threVals]
