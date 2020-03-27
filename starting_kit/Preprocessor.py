@@ -43,8 +43,8 @@ with warnings.catch_warnings():
 class Preprocessor(BaseEstimator):
 
     def __init__(self):
-        self.transformer = PCA(n_components=2)
         self.fited = False
+        self.transformer = [PCA(n_components=70)]
 
     def extract_features(self):
         ...
@@ -175,18 +175,6 @@ class Preprocessor(BaseEstimator):
             print(D.data['X_train'].shape)
             print(D.data['Y_train'].shape)
         """
-
-    def _PCAlg(D, n=70, show=False):
-        pca = PCA(n_components=n).fit(D.data['X_train'], D.data['Y_train'])
-
-        D.data['X_train'] = pca.transform(D.data['X_train'])
-        D.data['X_valid'] = pca.transform(D.data['X_valid'])
-        D.data['X_test'] = pca.transform(D.data['X_test'])
-
-        if show:
-            print(D.data['X_train'].shape)
-            print(D.data['X_valid'].shape)
-            print(D.data['X_test'].shape)
 
     def _featureSelection(D, show=False, threshold=0.008):
 
