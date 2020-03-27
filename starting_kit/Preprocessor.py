@@ -29,6 +29,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import time
+from sklearn.utils.estimator_checks import check_estimator
 
 from libscores import get_metric
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -53,10 +54,16 @@ class Preprocessor(BaseEstimator):
         ...
 
     def fit(self, X, y=None):
+        """
+        Learning from data
+        """
+        # TODO : determine best parameters (eg: threshold see below)
+        # TODO : extract features
         self.fited = True
         return self.transformer.fit(X, y)
 
     def fit_transform(self, X, y=None):
+        # TODO : call fit then transform
         self.fited = True
         return self.transformer.fit_transform(X)
 
@@ -344,3 +351,4 @@ pyplot.imshow(binarizedImage_localDerivative(i))
 
 extractPerimeter_withLocalDerivative(i)
 """
+check_estimator(Preprocessor)
