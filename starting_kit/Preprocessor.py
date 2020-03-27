@@ -1,15 +1,12 @@
 """
 Created on Fri Mar 27 17:49:23 2020
+@author: Jérôme, Pierre, George, Raphaël, Paul, Luqman
 Last revised: Mar 27, 2020
-@author: Jérôme, Pierre
-This is an example of program that preprocessed data.
-It does nothing it just copies the input to the output.
-Replace it with programs that:
-    normalize data (for instance subtract the mean and divide by the standard deviation of each column)
-    construct features (for instance add new columns with products of pairs of features)
-    select features (see many methods in scikit-learn)
-    re-combine features (PCA)
-    remove outliers (examples far from the median or the mean; can only be done in training data)
+Revision History :
+    Mar 27, 2020 : Jérôme
+
+This class aim to automate the preprocessing chain.
+Briefly, it will extract features from a set of data... TODO
 """
 
 import warnings
@@ -47,17 +44,27 @@ class Preprocessor(BaseEstimator):
 
     def __init__(self):
         self.transformer = PCA(n_components=2)
+        self.fited = False
+
+    def extract_features(self):
+        ...
 
     def fit(self, X, y=None):
+        self.fited = True
         return self.transformer.fit(X, y)
 
     def fit_transform(self, X, y=None):
+        self.fited = True
         return self.transformer.fit_transform(X)
 
     def transform(self, X, y=None):
-        return self.transformer.transform(X)
+        if not self.fited:
+            raise Exception("Impossible to transform unfit data")
+        else:
+            return self.transformer.transform(X)
 
-    def montreImage(self, index):
+    """
+    def _montreImage(self, index):
         imgSampleData = rawData.iloc[index, :-1]
         imgSampleData = np.array(imgSampleData, dtype=np.uint8)
         imgSampleData = np.resize(imgSampleData, (100, 100))
@@ -65,27 +72,27 @@ class Preprocessor(BaseEstimator):
         pyplot.title(rawData.iloc[index, -1])
         pyplot.show()
 
-    def saveImage(index):
+    def _saveImage(index):
         imgSampleData = rawData.iloc[index, :-1]
         imgSampleData = np.array(imgSampleData, dtype=np.uint8)
         imgSampleData = np.resize(imgSampleData, (100, 100))
         img = Image.fromarray(imgSampleData, 'L')
         img.save("images / saved / {}.png".format(index))
 
-    def getImage(index):
+    def _getImage(index):
         imgSampleData = rawData.iloc[index, :-1]
         imgSampleData = np.array(imgSampleData, dtype=np.uint8)
         imgSampleData = np.resize(imgSampleData, (100, 100))
         return imgSampleData
 
-    def binarizeImageArrayUsingMeans(img, means):
+    def _binarizeImageArrayUsingMeans(img, means):
         res = np.array(img, dtype=bool)
         for x in range(100):
             for y in range(100):
                 res[100 * y + x] = img[100 * y + x] > (means[100 + y] + means[x]) * 125
         return res
 
-    def binarizedImage_means(index):
+    def _binarizedImage_means(index):
         imgSampleData = np.array(rawData.iloc[index, :-1])
         imgInfos = np.array(data.iloc[index, :-4])
 
@@ -93,7 +100,7 @@ class Preprocessor(BaseEstimator):
         binarizedImage = np.resize(binarizedImage, (100, 100))
         return binarizedImage
 
-    def derivatedImage(img):
+    def _derivatedImage(img):
         mean = sum(img.ravel()) * 0.000005  # moyenne  /  20
         imgTranspose = img.transpose()
         res = 0 * np.array(imgTranspose[1:-1, 1:-1], dtype=np.uint8)
@@ -108,13 +115,13 @@ class Preprocessor(BaseEstimator):
             lineIdx += 1
         return res
 
-    def binarizedImageLocalDerivative(img):
+    def _binarizedImageLocalDerivative(img):
         der = derivatedImage(img)
         quantile = np.quantile(der, 0.60)
         f = lambda x: 0 if x > quantile else 1
         return np.vectorize(f)(der)
 
-    def binarizedImage_localDerivative(index):
+    def _binarizedImage_localDerivative(index):
         imgSampleData = np.resize(np.array(rawData.iloc[index, :-1], dtype=np.uint8), (100, 100))
         # convertissement de l'array en image (matrice d'entiers)
         binarizedImage = binarizedImageLocalDerivative(imgSampleData)
@@ -129,7 +136,7 @@ class Preprocessor(BaseEstimator):
         der = (np.vectorize(f)(der)).ravel()
         return sum(der) / len(der)
 
-    def removeOutliners(D, threshold=-1.7, show=False):
+    def _removeOutliners(D, threshold=-1.7, show=False):
         X = D.data['X_train']
         clf = LocalOutlierFactor(n_neighbors=7)
         clf.fit_predict(X)
@@ -167,8 +174,9 @@ class Preprocessor(BaseEstimator):
         if show:
             print(D.data['X_train'].shape)
             print(D.data['Y_train'].shape)
+        """
 
-    def PCAlg(D, n=70, show=False):
+    def _PCAlg(D, n=70, show=False):
         pca = PCA(n_components=n).fit(D.data['X_train'], D.data['Y_train'])
 
         D.data['X_train'] = pca.transform(D.data['X_train'])
@@ -180,14 +188,12 @@ class Preprocessor(BaseEstimator):
             print(D.data['X_valid'].shape)
             print(D.data['X_test'].shape)
 
-    def featureSelection(D, show=False):
-        fig, ax = plt.subplots(2, 1, figsize=(20, 10))
-
-        threshold = 0.008
+    def _featureSelection(D, show=False, threshold=0.008):
 
         score, pvalue = chi2(D.data['X_train'], D.data['Y_train'])[0], chi2(D.data['X_train'], D.data['Y_train'])[1]
 
         if show:
+            fig, ax = plt.subplots(2, 1, figsize=(20, 10))
             ax[0].plot(pvalue, 'b.', label="p-values of each feature")
             ax[0].plot(threshold * np.ones(len(score)), 'r', label="threshold= {}".format(threshold))
             ax[1].plot(score, 'b.', label="chi2 statistics of each feature")
@@ -256,7 +262,7 @@ class Preprocessor(BaseEstimator):
             res[idx][1] = scoring_function(Y, Y_hat)
         return res
 
-    def graph_threshold_changes(self, visible=False, thresholdValues=np.linspace(0.001, 0.05, 10), n=1):
+    def _graph_threshold_changes(self, visible=False, thresholdValues=np.linspace(0.001, 0.05, 10), n=1):
         moy = np.array(self.get_precision_and_time_for_various_threshold(visible, thresholdValues))
         i = n - 1
         while i > 0:
@@ -284,13 +290,6 @@ class Preprocessor(BaseEstimator):
         fig.show()
 
 
-"""
-# The sample_data directory should contain only a very small subset of the data
-
-# The data are loaded as a Pandas Data Frame
-
-print(D)
-"""
 if __name__ == "__main__":
     # We can use this to run this file as a script and test the Preprocessor
     if len(argv) == 1:  # Use the default input and output directories if no arguments are provided
@@ -311,8 +310,10 @@ if __name__ == "__main__":
     D.data['X_train'] = Prepro.fit_transform(D.data['X_train'], D.data['Y_train'])
     D.data['X_valid'] = Prepro.transform(D.data['X_valid'])
     D.data['X_test'] = Prepro.transform(D.data['X_test'])
+    """
     D.feat_name = np.array(['PC1', 'PC2'])
     D.feat_type = np.array(['Numeric', 'Numeric'])
+    """
 
     # Here show something that proves that the preprocessing worked fine
     print("*** Transformed data ***")
