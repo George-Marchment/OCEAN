@@ -176,6 +176,48 @@ class Preprocessor(BaseEstimator):
             print(D.data['Y_train'].shape)
         """
 
+    def removeOutliners(D, threshold=-1.7, show=True):
+        X = D.data['X_train']
+        clf = LocalOutlierFactor(n_neighbors=7)
+        clf.fit_predict(X)
+        if show:
+            fig, ax = plt.subplots(1, 1, figsize=(15, 15))
+
+            print(clf.negative_outlier_factor_)
+            print("max is ", max(clf.negative_outlier_factor_))
+            print("min is ", min(clf.negative_outlier_factor_))
+
+            ax.plot(clf.negative_outlier_factor_, 'b.', label="data")
+            ax.plot(threshold * np.ones(X.shape[0]), 'r', label="threshold= {}".format(threshold))
+            ax.legend()
+            ax.set_title("Representation of all points with outliners (under the threshold)")
+            ax.set_xlabel("data")
+            ax.set_ylabel("outliners")
+            plt.show(fig)
+
+        # save all indexes where clf.negative_outlier_factor_ is under the threshold
+        arr = clf.negative_outlier_factor_.copy()
+        idxToDelete = []
+        for i in range(0, len(arr)):
+            if (arr[i]) < threshold:
+                idxToDelete += [i]
+
+        # delete the outliners on X and Y
+
+        if show:
+            print(D.data['X_train'].shape)
+            print(D.data['Y_train'].shape)
+
+        D.data['X_train'] = np.delete(D.data['X_train'], idxToDelete, axis=0)
+        D.data['Y_train'] = np.delete(D.data['Y_train'], idxToDelete, axis=0)
+
+        if show:
+            print(D.data['X_train'].shape)
+            print(D.data['Y_train'].shape)
+
+
+
+
     def _featureSelection(D, show=False, threshold=0.008):
 
         score, pvalue = chi2(D.data['X_train'], D.data['Y_train'])[0], chi2(D.data['X_train'], D.data['Y_train'])[1]
