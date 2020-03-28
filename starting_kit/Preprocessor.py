@@ -58,7 +58,6 @@ class Preprocessor(BaseEstimator):
         Learning from data
         """
         # TODO : determine best parameters (eg: threshold see below)
-        # TODO : extract features
         self.fited = True
         return self.transformer.fit(X, y)
 
