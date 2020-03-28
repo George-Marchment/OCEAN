@@ -287,11 +287,11 @@ class ExtractFeatures():
                 res[100 * y + x] = img[100 * y + x] > (means[100 + y] + means[x]) * 125
         return res
 
-    def _binarizedImage_means(index):
+    def _binarizedImage_means(self, index):
         imgSampleData = np.array(rawData.iloc[index, :-1])
         imgInfos = np.array(data.iloc[index, :-4])
 
-        binarizedImage = binarizeImageArrayUsingMeans(imgSampleData, imgInfos)
+        binarizedImage = self.binarizeImageArrayUsingMeans(imgSampleData, imgInfos)
         binarizedImage = np.resize(binarizedImage, (100, 100))
         return binarizedImage
 
@@ -310,21 +310,21 @@ class ExtractFeatures():
             lineIdx += 1
         return res
 
-    def _binarizedImageLocalDerivative(img):
-        der = derivatedImage(img)
+    def _binarizedImageLocalDerivative(self, img):
+        der = self.derivatedImage(img)
         quantile = np.quantile(der, 0.60)
         f = lambda x: 0 if x > quantile else 1
         return np.vectorize(f)(der)
 
-    def _binarizedImage_localDerivative(index):
+    def _binarizedImage_localDerivative(self, index):
         imgSampleData = np.resize(np.array(rawData.iloc[index, :-1], dtype=np.uint8), (100, 100))
         # convertissement de l'array en image (matrice d'entiers)
-        binarizedImage = binarizedImageLocalDerivative(imgSampleData)
+        binarizedImage = self.binarizedImageLocalDerivative(imgSampleData)
         return binarizedImage
 
-    def extractPerimeter_withLocalDerivative(index):
+    def extractPerimeter_withLocalDerivative(self, index):
         img = np.resize(np.array(rawData.iloc[index, :-1], dtype=np.uint8), (100, 100))
-        der = derivatedImage(derivatedImage(img))
+        der = self.derivatedImage(self.derivatedImage(img))
         quantile = np.quantile(der, 0.60)
         f = lambda x: 1 if x > quantile else 0
         plt.imshow(np.vectorize(f)(der))
