@@ -65,6 +65,8 @@ class Preprocessor(BaseEstimator):
     def fit_transform(self, X, y=None):
         # TODO : call fit then transform
         self.fited = True
+
+        X = self.feature_selection.transform(X)
         return self.transformer.fit_transform(X)
 
     def transform(self, X, y=None):
@@ -72,80 +74,6 @@ class Preprocessor(BaseEstimator):
             raise Exception("Impossible to transform unfit data")
         else:
             return self.transformer.transform(X)
-
-    """
-    def _montreImage(self, index):
-        imgSampleData = rawData.iloc[index, :-1]
-        imgSampleData = np.array(imgSampleData, dtype=np.uint8)
-        imgSampleData = np.resize(imgSampleData, (100, 100))
-        pyplot.imshow(imgSampleData)
-        pyplot.title(rawData.iloc[index, -1])
-        pyplot.show()
-
-    def _saveImage(index):
-        imgSampleData = rawData.iloc[index, :-1]
-        imgSampleData = np.array(imgSampleData, dtype=np.uint8)
-        imgSampleData = np.resize(imgSampleData, (100, 100))
-        img = Image.fromarray(imgSampleData, 'L')
-        img.save("images / saved / {}.png".format(index))
-
-    def _getImage(index):
-        imgSampleData = rawData.iloc[index, :-1]
-        imgSampleData = np.array(imgSampleData, dtype=np.uint8)
-        imgSampleData = np.resize(imgSampleData, (100, 100))
-        return imgSampleData
-
-    def _binarizeImageArrayUsingMeans(img, means):
-        res = np.array(img, dtype=bool)
-        for x in range(100):
-            for y in range(100):
-                res[100 * y + x] = img[100 * y + x] > (means[100 + y] + means[x]) * 125
-        return res
-
-    def _binarizedImage_means(index):
-        imgSampleData = np.array(rawData.iloc[index, :-1])
-        imgInfos = np.array(data.iloc[index, :-4])
-
-        binarizedImage = binarizeImageArrayUsingMeans(imgSampleData, imgInfos)
-        binarizedImage = np.resize(binarizedImage, (100, 100))
-        return binarizedImage
-
-    def _derivatedImage(img):
-        mean = sum(img.ravel()) * 0.000005  # moyenne  /  20
-        imgTranspose = img.transpose()
-        res = 0 * np.array(imgTranspose[1:-1, 1:-1], dtype=np.uint8)
-        columnIdx = 0
-        for column in imgTranspose[2:-2]:
-            res[columnIdx] += np.uint8(mean * pow((column[2:] + column[:-2]) / column[1:-1], 1))
-            columnIdx += 1
-        res = res.transpose()
-        lineIdx = 0
-        for line in img[2:-2]:
-            res[lineIdx] += np.uint8(mean * pow((line[2:] + line[:-2]) / line[1:-1], 1))
-            lineIdx += 1
-        return res
-
-    def _binarizedImageLocalDerivative(img):
-        der = derivatedImage(img)
-        quantile = np.quantile(der, 0.60)
-        f = lambda x: 0 if x > quantile else 1
-        return np.vectorize(f)(der)
-
-    def _binarizedImage_localDerivative(index):
-        imgSampleData = np.resize(np.array(rawData.iloc[index, :-1], dtype=np.uint8), (100, 100))
-        # convertissement de l'array en image (matrice d'entiers)
-        binarizedImage = binarizedImageLocalDerivative(imgSampleData)
-        return binarizedImage
-
-    def extractPerimeter_withLocalDerivative(index):
-        img = np.resize(np.array(rawData.iloc[index, :-1], dtype=np.uint8), (100, 100))
-        der = derivatedImage(derivatedImage(img))
-        quantile = np.quantile(der, 0.60)
-        f = lambda x: 1 if x > quantile else 0
-        pyplot.imshow(np.vectorize(f)(der))
-        der = (np.vectorize(f)(der)).ravel()
-        return sum(der) / len(der)
-    """
 
     def _removeOutliners(self, X):
         """
@@ -189,10 +117,11 @@ class Preprocessor(BaseEstimator):
             print(D.data['X_train'].shape)
             print(D.data['Y_train'].shape)
 
-    def _featureSelection(self, D, threshold=0.008):
+    def _featureSelection(self, X, Y, threshold=0.008):
+
+        score, pvalue = chi2(X, Y)
 
         if self.show:
-            score, pvalue = chi2(D.data['X_train'], D.data['Y_train'])[0], chi2(D.data['X_train'], D.data['Y_train'])[1]
             fig, ax = plt.subplots(2, 1, figsize=(20, 10))
             ax[0].plot(pvalue, 'b.', label="p-values of each feature")
             ax[0].plot(threshold * np.ones(len(score)), 'r', label="threshold= {}".format(threshold))
@@ -215,11 +144,8 @@ class Preprocessor(BaseEstimator):
 
         print("Best number of features (with threshold = {}) is {}".format(threshold, k))
 
-        feature_selection = SelectKBest(chi2, k).fit(D.data['X_train'], D.data['Y_train'])
+        self.feature_selection = SelectKBest(chi2, k).fit(X, Y)
 
-        D.data['X_train'] = feature_selection.transform(D.data['X_train'])
-        D.data['X_valid'] = feature_selection.transform(D.data['X_valid'])
-        D.data['X_test'] = feature_selection.transform(D.data['X_test'])
         if self.show:
             print(D.data['X_train'].shape)
             print(D.data['X_valid'].shape)
@@ -289,7 +215,7 @@ class Preprocessor(BaseEstimator):
         ax[1][1].legend()
         fig.show()
 
-    # TODO 
+    # TODO
     def get_params(self, deep=True):
         # suppose this estimator has parameters "alpha" and "recursive"
         return {"alpha": self.alpha, "recursive": self.recursive}
@@ -302,6 +228,7 @@ class Preprocessor(BaseEstimator):
 
 if __name__ == "__main__":
     # We can use this to run this file as a script and test the Preprocessor
+    check_estimator(Preprocessor)
     if len(argv) == 1:  # Use the default input and output directories if no arguments are provided
         input_dir = "../public_data_raw"
         output_dir = "../results"
@@ -330,35 +257,76 @@ if __name__ == "__main__":
     print(D)
 
 
-"""
-warnings.simplefilter(action='ignore', category=FutureWarning)
-sns.set()
+class ExtractFeatures():
 
-# download data here : https://codalab.lri.fr/competitions/655#participate-get_starting_kit
-data_dir = './public_data'
-data_name = 'plankton'
+    def _montreImage(self, index):
+        imgSampleData = rawData.iloc[index, :-1]
+        imgSampleData = np.array(imgSampleData, dtype=np.uint8)
+        imgSampleData = np.resize(imgSampleData, (100, 100))
+        plt.imshow(imgSampleData)
+        plt.title(rawData.iloc[index, -1])
+        plt.show()
 
+    def _saveImage(index):
+        imgSampleData = rawData.iloc[index, :-1]
+        imgSampleData = np.array(imgSampleData, dtype=np.uint8)
+        imgSampleData = np.resize(imgSampleData, (100, 100))
+        img = Image.fromarray(imgSampleData, 'L')
+        img.save("images / saved / {}.png".format(index))
 
-# The data are loaded as a Pandas Data Frame
+    def _getImage(index):
+        imgSampleData = rawData.iloc[index, :-1]
+        imgSampleData = np.array(imgSampleData, dtype=np.uint8)
+        imgSampleData = np.resize(imgSampleData, (100, 100))
+        return imgSampleData
 
-imgSampleData = rawData.iloc[15, :-1]
-imgSampleData = np.array(imgSampleData, dtype=np.uint8)
-imgSampleData.shape
-imgSampleData = np.resize(imgSampleData, (100, 100))
-print(imgSampleData.dtype)
-print(imgSampleData.dtype)
-print(imgSampleData.shape)
+    def _binarizeImageArrayUsingMeans(img, means):
+        res = np.array(img, dtype=bool)
+        for x in range(100):
+            for y in range(100):
+                res[100 * y + x] = img[100 * y + x] > (means[100 + y] + means[x]) * 125
+        return res
 
-pyplot.imshow(imgSampleData).cmap
-print(pyplot.imshow(imgSampleData).cmap)
-pyplot.show()
+    def _binarizedImage_means(index):
+        imgSampleData = np.array(rawData.iloc[index, :-1])
+        imgInfos = np.array(data.iloc[index, :-4])
 
+        binarizedImage = binarizeImageArrayUsingMeans(imgSampleData, imgInfos)
+        binarizedImage = np.resize(binarizedImage, (100, 100))
+        return binarizedImage
 
+    def _derivatedImage(img):
+        mean = sum(img.ravel()) * 0.000005  # moyenne  /  20
+        imgTranspose = img.transpose()
+        res = 0 * np.array(imgTranspose[1:-1, 1:-1], dtype=np.uint8)
+        columnIdx = 0
+        for column in imgTranspose[2:-2]:
+            res[columnIdx] += np.uint8(mean * pow((column[2:] + column[:-2]) / column[1:-1], 1))
+            columnIdx += 1
+        res = res.transpose()
+        lineIdx = 0
+        for line in img[2:-2]:
+            res[lineIdx] += np.uint8(mean * pow((line[2:] + line[:-2]) / line[1:-1], 1))
+            lineIdx += 1
+        return res
 
-i = rn.choice(range(len(rawData)))
-montreImage(i)
-pyplot.imshow(binarizedImage_localDerivative(i))
+    def _binarizedImageLocalDerivative(img):
+        der = derivatedImage(img)
+        quantile = np.quantile(der, 0.60)
+        f = lambda x: 0 if x > quantile else 1
+        return np.vectorize(f)(der)
 
-extractPerimeter_withLocalDerivative(i)
-"""
-check_estimator(Preprocessor)
+    def _binarizedImage_localDerivative(index):
+        imgSampleData = np.resize(np.array(rawData.iloc[index, :-1], dtype=np.uint8), (100, 100))
+        # convertissement de l'array en image (matrice d'entiers)
+        binarizedImage = binarizedImageLocalDerivative(imgSampleData)
+        return binarizedImage
+
+    def extractPerimeter_withLocalDerivative(index):
+        img = np.resize(np.array(rawData.iloc[index, :-1], dtype=np.uint8), (100, 100))
+        der = derivatedImage(derivatedImage(img))
+        quantile = np.quantile(der, 0.60)
+        f = lambda x: 1 if x > quantile else 0
+        plt.imshow(np.vectorize(f)(der))
+        der = (np.vectorize(f)(der)).ravel()
+        return sum(der) / len(der)
