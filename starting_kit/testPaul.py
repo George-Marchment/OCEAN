@@ -12,7 +12,7 @@ Briefly, it will extract features from a set of data... TODO
 # what we aim : https://scikit-learn.org/stable/developers/develop.html#apis-of-scikit-learn-objects
 
 import warnings
-import path
+import paths
 from ingestion_program.data_io import read_as_df
 from sys import argv
 from ingestion_program.data_manager import DataManager
@@ -42,6 +42,7 @@ from scoring_program.libscores import get_metric
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 sns.set()
+paths
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
