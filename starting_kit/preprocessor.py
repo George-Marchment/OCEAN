@@ -1,6 +1,5 @@
 import warnings
-import path
-from data_io import read_as_df
+import paths
 from sys import argv
 from data_manager import DataManager
 
@@ -11,7 +10,6 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.tree import DecisionTreeClassifier
 import seaborn as sns
-from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -21,6 +19,7 @@ from sklearn.utils.estimator_checks import check_estimator
 from libscores import get_metric
 warnings.simplefilter(action='ignore', category=FutureWarning)
 sns.set()
+paths
 
 
 with warnings.catch_warnings():
@@ -45,21 +44,27 @@ class preprocessor(BaseEstimator):
         Learning from data
         """
         # TODO : determine best parameters (eg: threshold see below)
+        # [x] featureSelection
+        # [ ] outliners
+        # [ ] PCA
+
+        self.nbFeatures = self._featureSelectionFit(self, X, y)
+        self.feature_selection = SelectKBest(chi2, self.nbFeatures).fit(X, y)
+
         self.fited = True
         return self.transformer.fit(X, y)
 
-    def fit_transform(self, X, y=None):
-        # TODO : call fit then transform
+    def fit_transform(self, X, y):
+        self.fit(X, y)
         self.fited = True
+        return self.transform(X, y)
 
-        X = self.feature_selection.transform(X)
-        return self.transformer.fit_transform(X)
-
-    def transform(self, X, y=None):
+    def transform(self, X, y):
         if not self.fited:
             raise Exception("Impossible to transform unfit data")
         else:
-            return self.transformer.transform(X)
+            X = self.feature_selection.transform(X)
+            return X
 
     def _removeOutliners(self, X):
         """
@@ -103,52 +108,41 @@ class preprocessor(BaseEstimator):
             print(D.data['X_train'].shape)
             print(D.data['Y_train'].shape)
 
-    def _featureSelection(self, X, Y, threshold=0.008):
+    def _featureselectionfit(self, x, y):
+        score, pvalue = chi2(x, y)
+        threshold = self._best_threshold_featureselect(pvalue, x, y)
 
-        score, pvalue = chi2(X, Y)
-
-        if self.show:
-            fig, ax = plt.subplots(2, 1, figsize=(20, 10))
-            ax[0].plot(pvalue, 'b.', label="p-values of each feature")
-            ax[0].plot(threshold * np.ones(len(score)), 'r', label="threshold= {}".format(threshold))
-            ax[1].plot(score, 'b.', label="chi2 statistics of each feature")
-
-            ax[0].legend()
-            ax[1].legend()
-            ax[0].set_title("For each feature, the p-value is calculated")
-            ax[1].set_title("For each feature, the score is calculated")
-            ax[0].set_xlabel("features")
-            ax[1].set_xlabel("features")
-            ax[0].set_ylabel("p-value")
-            ax[1].set_ylabel("score")
-            plt.show(fig)
-
-        k = 0
+        nbFeatures = 0
         for i in pvalue:
             if(i < threshold):
-                k += 1
+                nbFeatures += 1
 
-        print("Best number of features (with threshold = {}) is {}".format(threshold, k))
+        print("best number of features (with threshold = {}) is {}".format(threshold, nbFeatures))
 
-        self.feature_selection = SelectKBest(chi2, k).fit(X, Y)
+    def _best_threshold_featureselect(pvalue, x, y):
+        thresholds = np.linspace(0, 1, 1000)
+        res = np.zeros(len(thresholds))
+        for i, threshold in enumerate(thresholds):
+            k = 0
+            for l in pvalue:
+                if(l < threshold):
+                    k += 1
+            res[i] = k
+            if i > 1 and res[i] - res[i - 1] < 1:
+                return threshold
 
-        if self.show:
-            print(D.data['X_train'].shape)
-            print(D.data['X_valid'].shape)
-            print(D.data['X_test'].shape)
-
-    def _get_precision_and_time_for_various_threshold(visible, threVals):
+    def _get_precision_and_time_for_various_threshold(X, visible, threVals):
         metric_name, scoring_function = get_metric()
         idx = -1
         res = [[i, 0, 0, 0]for i in threVals]
-        D = DataManager(data_name, data_dir, replace_missing=True)
-        basicX = pd.DataFrame(D.data['X_train'])
+        # D = DataManager(data_name, data_dir, replace_missing=True)
+        # basicX = pd.DataFrame(D.data['X_train'])
 
         Y = D.data['Y_train']
         for var in threVals:
             idx += 1
             sel = VarianceThreshold(threshold=(var))
-            X = pd.DataFrame(data=sel.fit_transform(basicX))
+            X = pd.DataFrame(data=sel.fit_transform(X))
             alreadyDone = False
             for i in res[:idx]:
                 if X.shape[1] == i[3]:
