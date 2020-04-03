@@ -1,6 +1,16 @@
+"""
+Created on Fri Mar 27 17:49:23 2020
+@author: Jérôme, Pierre, George, Raphaël, Paul, Luqman
+Last revised: Avr 04, 2020
+Revision History :
+    Avr 04, 2020 : Jérôme
+    Mar 27, 2020 : Jérôme
+
+This class aim to automate the preprocessing chain.
+Briefly, it will extract features from a set of data... TODO
+"""
 import warnings
 import paths
-from sys import argv
 from data_manager import DataManager
 
 from sklearn.feature_selection import chi2
@@ -9,7 +19,6 @@ from sklearn.decomposition import PCA
 from sklearn.neighbors import LocalOutlierFactor
 import seaborn as sns
 import numpy as np
-from sklearn.utils.estimator_checks import check_estimator
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 sns.set()
@@ -42,14 +51,15 @@ class preprocessor(BaseEstimator):
         # [x] Outliners
         # [ ] PCA
 
-        self.nbFeatures = self._featureSelectionFit(self, X, Y)
+        self.nbFeatures = self._featureSelectionFit(X, Y)
         self.feature_selection = SelectKBest(chi2, self.nbFeatures).fit(X, Y)
-        self.thresholdOutliners = self._removeOulinersFit(X)
+        self.thresholdOutliners = self._removeOutlinersFit(X)
 
         self.fited = True
         return self
 
     def fit_transform(self, X, Y):
+        print(Y)
         self.fit(X, Y)
         self.fited = True
         return self.fit(X, Y).transform(X)
@@ -64,7 +74,7 @@ class preprocessor(BaseEstimator):
 
     def _removeOutlinersFit(self, X):
         """
-        From X, _removeOulinersFit calculates the threshold to remove outliers
+        From X, _removeOutlinersFit calculates the threshold to remove outliers
         """
         clf = LocalOutlierFactor()
         clf.fit_predict(X)
@@ -89,9 +99,9 @@ class preprocessor(BaseEstimator):
         D.data['X_train'] = np.delete(D.data['X_train'], idxToDelete, axis=0)
         return np.delete(X, idxToDelete, axis=0)
 
-    def _featureselectionfit(self, x, y):
-        score, pvalue = chi2(x, y)
-        threshold = self._best_threshold_featureselect(pvalue, x, y)
+    def _featureSelectionFit(self, X, Y):
+        score, pvalue = chi2(X, Y)
+        threshold = self._best_threshold_featureselect(pvalue, X, Y)
 
         nbFeatures = 0
         for i in pvalue:
@@ -99,8 +109,9 @@ class preprocessor(BaseEstimator):
                 nbFeatures += 1
 
         print("best number of features (with threshold = {}) is {}".format(threshold, nbFeatures))
+        return nbFeatures
 
-    def _best_threshold_featureselect(pvalue, x, y):
+    def _best_threshold_featureselect(self, pvalue, x, y):
         thresholds = np.linspace(0, 1, 1000)
         res = np.zeros(len(thresholds))
         for i, threshold in enumerate(thresholds):
@@ -125,16 +136,13 @@ class preprocessor(BaseEstimator):
 
 if __name__ == "__main__":
     # We can use this to run this file as a script and test the preprocessor
-    check_estimator(preprocessor)
-    if len(argv) == 1:  # Use the default input and output directories if no arguments are provided
-        input_dir = "../public_data_raw"
-        output_dir = "../results"
-    else:
-        input_dir = argv[1]
-        output_dir = argv[2]
+    # check_estimator(preprocessor)
+
+    data_name = 'plankton'
+    data_dir = './public_data'          # The sample_data directory should contain only a very small subset of the data
 
     basename = 'Iris'
-    D = DataManager(basename, input_dir)  # Load data
+    D = DataManager(data_name, data_dir, replace_missing=True)
     print("*** Original data ***")
     print(D)
 
