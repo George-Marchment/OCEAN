@@ -41,8 +41,9 @@ with warnings.catch_warnings():
     from sklearn.base import BaseEstimator
     # Note: if zDataManager is not ready, use the mother class DataManager
 
+# NEED SAVE & LOAD
 
-class Preprocessor(BaseEstimator):
+class model(BaseEstimator):
 
     def __init__(self):
         self.show = False
@@ -227,7 +228,7 @@ class Preprocessor(BaseEstimator):
 
 if __name__ == "__main__":
     # We can use this to run this file as a script and test the Preprocessor
-    check_estimator(Preprocessor)
+    check_estimator(model)
     if len(argv) == 1:  # Use the default input and output directories if no arguments are provided
         input_dir = "../public_data_raw"
         output_dir = "../results"
@@ -240,7 +241,7 @@ if __name__ == "__main__":
     print("*** Original data ***")
     print(D)
 
-    Prepro = Preprocessor()
+    Prepro = model()
 
     # Preprocess on the data and load it back into D
     D.data['X_train'] = Prepro.fit_transform(D.data['X_train'], D.data['Y_train'])
