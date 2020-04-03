@@ -12,7 +12,7 @@ Briefly, it will extract features from a set of data... TODO
 # what we aim : https://scikit-learn.org/stable/developers/develop.html#apis-of-scikit-learn-objects
 
 import warnings
-import path
+import paths
 from data_io import read_as_df
 from sys import argv
 from data_manager import DataManager
@@ -214,6 +214,12 @@ class model(BaseEstimator):
         ax[1][1].set_ylabel("time of execution")
         ax[1][1].legend()
         fig.show()
+
+    def save(self, path="./"):
+        pass
+
+    def load(self, path="./"):
+        pass
 
     # TODO
     def get_params(self, deep=True):

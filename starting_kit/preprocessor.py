@@ -1,19 +1,5 @@
-"""
-Created on Fri Mar 27 17:49:23 2020
-@author: Jérôme, Pierre, George, Raphaël, Paul, Luqman
-Last revised: Mar 27, 2020
-Revision History :
-    Mar 27, 2020 : Jérôme
-
-This class aim to automate the preprocessing chain.
-Briefly, it will extract features from a set of data... TODO
-"""
-
-# what we aim : https://scikit-learn.org/stable/developers/develop.html#apis-of-scikit-learn-objects
-
 import warnings
-import path
-from data_io import read_as_df
+import paths
 from sys import argv
 from data_manager import DataManager
 
@@ -24,7 +10,6 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.tree import DecisionTreeClassifier
 import seaborn as sns
-from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -34,6 +19,7 @@ from sklearn.utils.estimator_checks import check_estimator
 from libscores import get_metric
 warnings.simplefilter(action='ignore', category=FutureWarning)
 sns.set()
+paths
 
 
 with warnings.catch_warnings():
@@ -42,7 +28,7 @@ with warnings.catch_warnings():
     # Note: if zDataManager is not ready, use the mother class DataManager
 
 
-class Preprocessor(BaseEstimator):
+class preprocessor(BaseEstimator):
 
     def __init__(self):
         self.show = False
@@ -58,21 +44,27 @@ class Preprocessor(BaseEstimator):
         Learning from data
         """
         # TODO : determine best parameters (eg: threshold see below)
+        # [x] featureSelection
+        # [ ] outliners
+        # [ ] PCA
+
+        self.nbFeatures = self._featureSelectionFit(self, X, y)
+        self.feature_selection = SelectKBest(chi2, self.nbFeatures).fit(X, y)
+
         self.fited = True
         return self.transformer.fit(X, y)
 
-    def fit_transform(self, X, y=None):
-        # TODO : call fit then transform
+    def fit_transform(self, X, y):
+        self.fit(X, y)
         self.fited = True
+        return self.transform(X, y)
 
-        X = self.feature_selection.transform(X)
-        return self.transformer.fit_transform(X)
-
-    def transform(self, X, y=None):
+    def transform(self, X, y):
         if not self.fited:
             raise Exception("Impossible to transform unfit data")
         else:
-            return self.transformer.transform(X)
+            X = self.feature_selection.transform(X)
+            return X
 
     def _removeOutliners(self, X):
         """
@@ -116,52 +108,41 @@ class Preprocessor(BaseEstimator):
             print(D.data['X_train'].shape)
             print(D.data['Y_train'].shape)
 
-    def _featureSelection(self, X, Y, threshold=0.008):
+    def _featureselectionfit(self, x, y):
+        score, pvalue = chi2(x, y)
+        threshold = self._best_threshold_featureselect(pvalue, x, y)
 
-        score, pvalue = chi2(X, Y)
-
-        if self.show:
-            fig, ax = plt.subplots(2, 1, figsize=(20, 10))
-            ax[0].plot(pvalue, 'b.', label="p-values of each feature")
-            ax[0].plot(threshold * np.ones(len(score)), 'r', label="threshold= {}".format(threshold))
-            ax[1].plot(score, 'b.', label="chi2 statistics of each feature")
-
-            ax[0].legend()
-            ax[1].legend()
-            ax[0].set_title("For each feature, the p-value is calculated")
-            ax[1].set_title("For each feature, the score is calculated")
-            ax[0].set_xlabel("features")
-            ax[1].set_xlabel("features")
-            ax[0].set_ylabel("p-value")
-            ax[1].set_ylabel("score")
-            plt.show(fig)
-
-        k = 0
+        nbFeatures = 0
         for i in pvalue:
             if(i < threshold):
-                k += 1
+                nbFeatures += 1
 
-        print("Best number of features (with threshold = {}) is {}".format(threshold, k))
+        print("best number of features (with threshold = {}) is {}".format(threshold, nbFeatures))
 
-        self.feature_selection = SelectKBest(chi2, k).fit(X, Y)
+    def _best_threshold_featureselect(pvalue, x, y):
+        thresholds = np.linspace(0, 1, 1000)
+        res = np.zeros(len(thresholds))
+        for i, threshold in enumerate(thresholds):
+            k = 0
+            for l in pvalue:
+                if(l < threshold):
+                    k += 1
+            res[i] = k
+            if i > 1 and res[i] - res[i - 1] < 1:
+                return threshold
 
-        if self.show:
-            print(D.data['X_train'].shape)
-            print(D.data['X_valid'].shape)
-            print(D.data['X_test'].shape)
-
-    def _get_precision_and_time_for_various_threshold(visible, threVals):
+    def _get_precision_and_time_for_various_threshold(X, visible, threVals):
         metric_name, scoring_function = get_metric()
         idx = -1
         res = [[i, 0, 0, 0]for i in threVals]
-        D = DataManager(data_name, data_dir, replace_missing=True)
-        basicX = pd.DataFrame(D.data['X_train'])
+        # D = DataManager(data_name, data_dir, replace_missing=True)
+        # basicX = pd.DataFrame(D.data['X_train'])
 
         Y = D.data['Y_train']
         for var in threVals:
             idx += 1
             sel = VarianceThreshold(threshold=(var))
-            X = pd.DataFrame(data=sel.fit_transform(basicX))
+            X = pd.DataFrame(data=sel.fit_transform(X))
             alreadyDone = False
             for i in res[:idx]:
                 if X.shape[1] == i[3]:
@@ -226,8 +207,8 @@ class Preprocessor(BaseEstimator):
 
 
 if __name__ == "__main__":
-    # We can use this to run this file as a script and test the Preprocessor
-    check_estimator(Preprocessor)
+    # We can use this to run this file as a script and test the preprocessor
+    check_estimator(preprocessor)
     if len(argv) == 1:  # Use the default input and output directories if no arguments are provided
         input_dir = "../public_data_raw"
         output_dir = "../results"
@@ -240,7 +221,7 @@ if __name__ == "__main__":
     print("*** Original data ***")
     print(D)
 
-    Prepro = Preprocessor()
+    Prepro = preprocessor()
 
     # Preprocess on the data and load it back into D
     D.data['X_train'] = Prepro.fit_transform(D.data['X_train'], D.data['Y_train'])
@@ -254,78 +235,3 @@ if __name__ == "__main__":
     # Here show something that proves that the preprocessing worked fine
     print("*** Transformed data ***")
     print(D)
-
-
-class ExtractFeatures():
-
-    def _montreImage(self, index):
-        imgSampleData = rawData.iloc[index, :-1]
-        imgSampleData = np.array(imgSampleData, dtype=np.uint8)
-        imgSampleData = np.resize(imgSampleData, (100, 100))
-        plt.imshow(imgSampleData)
-        plt.title(rawData.iloc[index, -1])
-        plt.show()
-
-    def _saveImage(index):
-        imgSampleData = rawData.iloc[index, :-1]
-        imgSampleData = np.array(imgSampleData, dtype=np.uint8)
-        imgSampleData = np.resize(imgSampleData, (100, 100))
-        img = Image.fromarray(imgSampleData, 'L')
-        img.save("images / saved / {}.png".format(index))
-
-    def _getImage(index):
-        imgSampleData = rawData.iloc[index, :-1]
-        imgSampleData = np.array(imgSampleData, dtype=np.uint8)
-        imgSampleData = np.resize(imgSampleData, (100, 100))
-        return imgSampleData
-
-    def _binarizeImageArrayUsingMeans(img, means):
-        res = np.array(img, dtype=bool)
-        for x in range(100):
-            for y in range(100):
-                res[100 * y + x] = img[100 * y + x] > (means[100 + y] + means[x]) * 125
-        return res
-
-    def _binarizedImage_means(self, index):
-        imgSampleData = np.array(rawData.iloc[index, :-1])
-        imgInfos = np.array(data.iloc[index, :-4])
-
-        binarizedImage = self.binarizeImageArrayUsingMeans(imgSampleData, imgInfos)
-        binarizedImage = np.resize(binarizedImage, (100, 100))
-        return binarizedImage
-
-    def _derivatedImage(img):
-        mean = sum(img.ravel()) * 0.000005  # moyenne  /  20
-        imgTranspose = img.transpose()
-        res = 0 * np.array(imgTranspose[1:-1, 1:-1], dtype=np.uint8)
-        columnIdx = 0
-        for column in imgTranspose[2:-2]:
-            res[columnIdx] += np.uint8(mean * pow((column[2:] + column[:-2]) / column[1:-1], 1))
-            columnIdx += 1
-        res = res.transpose()
-        lineIdx = 0
-        for line in img[2:-2]:
-            res[lineIdx] += np.uint8(mean * pow((line[2:] + line[:-2]) / line[1:-1], 1))
-            lineIdx += 1
-        return res
-
-    def _binarizedImageLocalDerivative(self, img):
-        der = self.derivatedImage(img)
-        quantile = np.quantile(der, 0.60)
-        f = lambda x: 0 if x > quantile else 1
-        return np.vectorize(f)(der)
-
-    def _binarizedImage_localDerivative(self, index):
-        imgSampleData = np.resize(np.array(rawData.iloc[index, :-1], dtype=np.uint8), (100, 100))
-        # convertissement de l'array en image (matrice d'entiers)
-        binarizedImage = self.binarizedImageLocalDerivative(imgSampleData)
-        return binarizedImage
-
-    def extractPerimeter_withLocalDerivative(self, index):
-        img = np.resize(np.array(rawData.iloc[index, :-1], dtype=np.uint8), (100, 100))
-        der = self.derivatedImage(self.derivatedImage(img))
-        quantile = np.quantile(der, 0.60)
-        f = lambda x: 1 if x > quantile else 0
-        plt.imshow(np.vectorize(f)(der))
-        der = (np.vectorize(f)(der)).ravel()
-        return sum(der) / len(der)
