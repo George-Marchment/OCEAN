@@ -50,6 +50,7 @@ class preprocessor(BaseEstimator):
         # [x] featureSelection
         # [x] Outliners
         # [ ] PCA
+        # [ ] add some prints
 
         self.nbFeatures = self._featureSelectionFit(X, Y)
         self.feature_selection = SelectKBest(chi2, self.nbFeatures).fit(X, Y)
@@ -59,7 +60,6 @@ class preprocessor(BaseEstimator):
         return self
 
     def fit_transform(self, X, Y):
-        print(Y)
         self.fit(X, Y)
         self.fited = True
         return self.fit(X, Y).transform(X)
@@ -152,10 +152,6 @@ if __name__ == "__main__":
     D.data['X_train'] = Prepro.fit_transform(D.data['X_train'], D.data['Y_train'])
     D.data['X_valid'] = Prepro.transform(D.data['X_valid'])
     D.data['X_test'] = Prepro.transform(D.data['X_test'])
-    """
-    D.feat_name = np.array(['PC1', 'PC2'])
-    D.feat_type = np.array(['Numeric', 'Numeric'])
-    """
 
     # Here show something that proves that the preprocessing worked fine
     print("*** Transformed data ***")
