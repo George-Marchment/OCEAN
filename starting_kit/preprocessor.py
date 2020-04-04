@@ -70,6 +70,7 @@ class preprocessor(BaseEstimator):
             X = self.pca.transform(X)
             X = self._removeOutliners(X)
             if Y is not None:
+                print("remove outliners for Y")
                 Y = self._removeOutliners(Y)
                 return X, Y
             return X
@@ -81,6 +82,7 @@ class preprocessor(BaseEstimator):
         clf = LocalOutlierFactor()
         clf.fit_predict(X)
         arr = clf.negative_outlier_factor_.copy()
+        self.arr = arr
         thresholds = np.flip(np.sort(arr))
         for diff in (max(arr) - min(arr)) / np.flip(np.arange(1, 4000, 100)):
             for i, th in enumerate(thresholds):
@@ -91,9 +93,7 @@ class preprocessor(BaseEstimator):
 
     def _removeOutliners(self, X):
         threshold = self.thresholdOutliners
-        clf = LocalOutlierFactor()
-        clf.fit_predict(X)
-        arr = clf.negative_outlier_factor_.copy()
+        arr = self.arr
 
         idxToDelete = []
         for i, d in enumerate(arr):
@@ -139,6 +139,9 @@ if __name__ == "__main__":
     Prepro = preprocessor()
 
     # Preprocess on the data and load it back into D
+    pp = Prepro.fit(D.data['X_train'], D.data['Y_train'])
+    X, Y = pp.transform(D.data['X_train'], D.data['Y_train'])
+    print(X.shape, Y.shape)
     D.data['X_train'] = Prepro.fit_transform(D.data['X_train'], D.data['Y_train'])
     D.data['X_valid'] = Prepro.transform(D.data['X_valid'])
     D.data['X_test'] = Prepro.transform(D.data['X_test'])
