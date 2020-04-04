@@ -69,6 +69,9 @@ class preprocessor(BaseEstimator):
             X = self.feature_selection.transform(X)
             X = self.pca.transform(X)
             X = self._removeOutliners(X)
+            if Y is not None:
+                Y = self._removeOutliners(Y)
+                return X, Y
             return X
 
     def _removeOutlinersFit(self, X):
@@ -123,23 +126,10 @@ class preprocessor(BaseEstimator):
             if i > 1 and res[i] - res[i - 1] < 1:
                 return threshold
 
-    # TODO
-    def get_params(self, deep=True):
-        # suppose this estimator has parameters "alpha" and "recursive"
-        return {"alpha": self.alpha, "recursive": self.recursive}
-
-    def set_params(self, **parameters):
-        for parameter, value in parameters.items():
-            setattr(self, parameter, value)
-        return self
-
 
 if __name__ == "__main__":
-    # We can use this to run this file as a script and test the preprocessor
-    # check_estimator(preprocessor)
-
     data_name = 'plankton'
-    data_dir = './public_data'          # The sample_data directory should contain only a very small subset of the data
+    data_dir = './public_data'
 
     basename = 'Iris'
     D = DataManager(data_name, data_dir, replace_missing=True)
