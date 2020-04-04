@@ -44,21 +44,21 @@ class model(BaseEstimator):
 We create our model we supposed is the best one with a given classifier with its parameters
 """
 
-
-    def __init__(self, clf, param):
+    def __init__(self, clf= RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False) ):
         """
         Initialisation of the model
         @clf : the classifier to initialize
         @param : the parameters associated with the classifier
         """
-        # self.clf = RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False)
-        self.clf = clf.set_params(param)
-        self.param = param
+        self.clf = clf
+        #self.clf = clf.set_params(**param)
+        #self.param = param
         self.show = False
         self.fited = False
         self.n_components = 70
-        # self.transformer = [PCA(self.n_components)]
+        self.pre = prepro.Preprocessor()
 
+        # self.transformer = [PCA(self.n_components)]
 
     def fit(self, X, y):
         """
@@ -67,8 +67,9 @@ We create our model we supposed is the best one with a given classifier with its
         @y : the labels of our training set
         """
         # TODO : determine best parameters (eg: threshold see below)
+        X_train = pre.fit_transform(X, y)
         if not self.fited:
-            self.clf.fit(X, y)
+            self.clf.fit(X_train, y)
             self.fited = True
 
     def predict(self, X):
@@ -76,7 +77,8 @@ We create our model we supposed is the best one with a given classifier with its
         Prediction of the datas with our trained model
         @X : the testing set predicted by our model
         """
-        return self.clf.predict(X)
+        X_test = pre.transform(X)
+        return self.clf.predict(X_test)
 
     def predictProba(self, X):
         """
@@ -113,7 +115,6 @@ class BestParam(BaseEstimator):
     A class to fin the best hyperparameters of a given classifier with given datas
     """
 
-
     def __init__(self, clf, listParam, X_train, Y_train):
         """
         Initialiaze the classifier with  a training set of datas
@@ -129,7 +130,6 @@ class BestParam(BaseEstimator):
         self.bestParam = None
         self.bestScore = None
 
-
     def train(self):
         """
         Use the gridSearchCV algorithm to train our classifier and find its best parameters
@@ -137,7 +137,6 @@ class BestParam(BaseEstimator):
         tmpclf = GridSearchCV(self.clf, self.listParam, scoring='balanced_accuracy', n_jobs=-1)
         tmpclf.fit(self.X_train, self.Y_train.ravel())
         # print(tmpclf.best_params_)
-        print("Score =", tmpclf.best_score_)
         self.bestParam = tmpclf.best_params_
         self.bestScore = tmpclf.best_score_
 
@@ -146,7 +145,6 @@ class BestClf(BaseEstimator):
     """
     Find the best model with best parameters in a list of classifiers with a list of different parameters
     """
-
 
     def __init__(self, listClf, listParam, X, Y):
         """
@@ -167,13 +165,13 @@ class BestClf(BaseEstimator):
             print("Erreur, la liste de classifieur n'a pas la meme taille que la liste de parametres")
             exit(0)
 
-
     def train(self):
         """
         Find the best model by comparing the different scores
         """
         for i in range(len(self.listClf)):
-            tmp = BestParam(self.listClf[i], self.listParam[i], X, Y)
+            tmp = BestParam(self.listClf[i], self.listParam[i], self.X, self.Y)
+            tmp.train()
             if tmp.bestScore > self.score:
                 self.bestClf = self.listClf[i]
                 self.score = tmp.bestScore
@@ -243,7 +241,7 @@ if __name__ == "__main__":
     """
     D = DataManager('plankton', './public_data', replace_missing=True)
     X = D.data['X_train']
-    Y = D.data['Y_train']
+    Y = D.data['Y_train'].ravel()
 
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=42)
 
@@ -280,6 +278,7 @@ if __name__ == "__main__":
     clf = BestClf(model_list, param_list, X_train, Y_train)
     clf.train()
 
+    print("meilleurs param = ", clf.bestParam )
     """
     Le meilleur modèle est initialisé et on teste son score
     """

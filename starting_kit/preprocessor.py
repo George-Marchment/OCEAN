@@ -33,14 +33,11 @@ with warnings.catch_warnings():
     from sklearn.base import BaseEstimator
 
 
-class preprocessor(BaseEstimator):
+class Preprocessor(BaseEstimator):
 
     def __init__(self):
         self.show = False
         self.fited = False
-
-    def extract_features(self):
-        ...
 
     def fit(self, X, Y, pcaFeaturesNumber=70):
         """ Learns from data, call fit methods of every aglorithm
@@ -177,16 +174,16 @@ class preprocessor(BaseEstimator):
                 return threshold
 
 
-if __name__ == "__main__":
+def tests():
+    # more tests on our jupyter notebook, some functions here were tested on jupyter
     data_name = 'plankton'
     data_dir = './public_data'
 
-    basename = 'Iris'
     D = DataManager(data_name, data_dir, replace_missing=True)
     print("*** Original data ***")
     print(D)
 
-    Prepro = preprocessor()
+    Prepro = Preprocessor()
 
     # Preprocess on the data and load it back into D
     pp = Prepro.fit(D.data['X_train'], D.data['Y_train'])
