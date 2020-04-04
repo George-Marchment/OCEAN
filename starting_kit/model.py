@@ -56,6 +56,8 @@ We create our model we supposed is the best one with a given classifier with its
         self.show = False
         self.fited = False
         self.n_components = 70
+        self.pre = prepro.Preprocessor()
+
         # self.transformer = [PCA(self.n_components)]
 
     def fit(self, X, y):
@@ -65,8 +67,9 @@ We create our model we supposed is the best one with a given classifier with its
         @y : the labels of our training set
         """
         # TODO : determine best parameters (eg: threshold see below)
+        X_train = pre.fit_transform(X, y)
         if not self.fited:
-            self.clf.fit(X, y)
+            self.clf.fit(X_train, y)
             self.fited = True
 
     def predict(self, X):
@@ -74,7 +77,8 @@ We create our model we supposed is the best one with a given classifier with its
         Prediction of the datas with our trained model
         @X : the testing set predicted by our model
         """
-        return self.clf.predict(X)
+        X_test = pre.transform(X)
+        return self.clf.predict(X_test)
 
     def predictProba(self, X):
         """
