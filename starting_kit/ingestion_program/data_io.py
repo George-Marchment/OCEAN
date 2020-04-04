@@ -47,9 +47,10 @@ import platform
 def read_as_df(basename, type="train"):
     ''' Function to read the AutoML format and return a Panda Data Frame '''
     csvfile = basename + '_' + type + '.csv'
-    if isfile(csvfile):
+    if isfile(csvfile): # MODIFIED, there was an error with the first row containing feature indexes.
     	print('Reading '+ basename + '_' + type + ' from CSV')
     	XY = pd.read_csv(csvfile)
+    	del XY['Unnamed: 0']
     	return XY
     	
     print('Reading '+ basename + '_' + type+ ' from AutoML format')
@@ -85,6 +86,17 @@ def read_as_df(basename, type="train"):
         XY = X.assign(target=nominal_target.values)          # Add the last column
     
     return XY
+
+
+#ADDED:
+def write_as_csv(dataFrame, basename, type = "train"):
+    """
+    Saves a read_as_df() readable file containing all data, (data name & data values).
+    Should be called once for every type of dataset (training data, testing data & validation data).
+    """
+    dataFrame.to_csv(basename+"_" + type + ".csv")
+   
+    
     
 # ================ Small auxiliary functions =================
 
