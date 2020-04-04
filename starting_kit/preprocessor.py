@@ -3,11 +3,15 @@ Created on Fri Mar 27 17:49:23 2020
 @author: Jérôme, Pierre, George, Raphaël, Paul, Luqman
 Last revised: Avr 04, 2020
 Revision History :
+    Avr 05, 2020 : Jérôme
     Avr 04, 2020 : Jérôme
     Mar 27, 2020 : Jérôme
 
 This class aim to automate the preprocessing chain.
-Briefly, it will extract features from a set of data... TODO
+Briefly, we apply a series a algorithms in order to get data ready for the model.
+First, we reduce the number of features in a clever way, we keep the features that are the most statistically likely to be useful.
+After, we apply the PCA algorithm to reduce the number of features without losing data. It is used to reduce the calculation size.
+The last step is the remove outliers, it is the data considered less usefull to analyse. Use perform a statistical test called chi2 to remove outliers.
 """
 import warnings
 import paths
@@ -24,11 +28,9 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 sns.set()
 paths
 
-
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     from sklearn.base import BaseEstimator
-    # Note: if zDataManager is not ready, use the mother class DataManager
 
 
 class preprocessor(BaseEstimator):
@@ -41,15 +43,15 @@ class preprocessor(BaseEstimator):
         ...
 
     def fit(self, X, Y, pcaFeaturesNumber=70):
-        """
-        Learning from data
-        """
-        # TODO : determine best parameters (eg: threshold see below)
-        # [x] featureSelection
-        # [x] Outliners
-        # [x] PCA
-        # [x] add some prints
+        """ Learns from data, call fit methods of every aglorithm
 
+        Parameters :
+            X, Y the data
+            pcaFeaturesNumber the final number of feature (optional, default = 70)
+
+        Returns
+            the class with everything fitted
+        """
         self.nbFeatures = self._featureSelectionFit(X, Y)
         self.feature_selection = SelectKBest(chi2, self.nbFeatures).fit(X, Y)
         X2 = self.feature_selection.transform(X)
@@ -59,10 +61,28 @@ class preprocessor(BaseEstimator):
         return self
 
     def fit_transform(self, X, Y, pcaFeaturesNumber=70):
+        """ Learns from data, call fit methods of every aglorithm and transform the data
+
+        Parameters :
+            X, Y the data
+            pcaFeaturesNumber the final number of feature (optional, default = 70)
+
+        Returns
+            X the data transformed
+        """
         self.fited = True
         return self.fit(X, Y, pcaFeaturesNumber).transform(X)
 
     def transform(self, X, Y=None):
+        """ Transform the data from a previous learn
+
+        Parameters :
+            X, Y the data
+
+        Returns
+            X the data transformed
+            Y the data transformed (optionnal)
+        """
         if not self.fited:
             raise Exception("Cannot transform is data is not fit")
         else:
@@ -76,8 +96,13 @@ class preprocessor(BaseEstimator):
             return X
 
     def _removeOutlinersFit(self, X):
-        """
-        From X, _removeOutlinersFit calculates the threshold to remove outliers
+        """From X, _removeOutlinersFit calculates the threshold to remove outliers
+
+        Parameters :
+            X the data
+
+        Returns :
+            the threshold for the outliers to be deleted
         """
         clf = LocalOutlierFactor()
         clf.fit_predict(X)
@@ -92,6 +117,14 @@ class preprocessor(BaseEstimator):
         return -1.7
 
     def _removeOutliners(self, X):
+        """ Removes to outliers of X
+
+        Parameters :
+            X the data
+
+        Returns :
+            X without the outliers
+        """
         threshold = self.thresholdOutliners
         arr = self.arr
 
@@ -103,6 +136,14 @@ class preprocessor(BaseEstimator):
         return np.delete(X, idxToDelete, axis=0)
 
     def _featureSelectionFit(self, X, Y):
+        """ Finds the best number of features to keep
+
+        Parameters :
+            X, Y the data
+
+        Returns :
+            The number of features to keep
+        """
         score, pvalue = chi2(X, Y)
         threshold = self._best_threshold_featureselect(pvalue, X, Y)
 
@@ -115,6 +156,15 @@ class preprocessor(BaseEstimator):
         return nbFeatures
 
     def _best_threshold_featureselect(self, pvalue, x, y):
+        """ Method used to help finding the best number of features to keep
+
+        Parameters :
+            pvalue the result of a chi2 test
+            X, Y the data
+
+        Returns :
+            Threshold for selecting the features
+        """
         thresholds = np.linspace(0, 1, 1000)
         res = np.zeros(len(thresholds))
         for i, threshold in enumerate(thresholds):
