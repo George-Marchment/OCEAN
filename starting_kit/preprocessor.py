@@ -48,7 +48,7 @@ class preprocessor(BaseEstimator):
         # [x] featureSelection
         # [x] Outliners
         # [x] PCA
-        # [ ] add some prints
+        # [x] add some prints
 
         self.nbFeatures = self._featureSelectionFit(X, Y)
         self.feature_selection = SelectKBest(chi2, self.nbFeatures).fit(X, Y)
@@ -82,6 +82,7 @@ class preprocessor(BaseEstimator):
         for diff in (max(arr) - min(arr)) / np.flip(np.arange(1, 4000, 100)):
             for i, th in enumerate(thresholds):
                 if i > 10 and abs(thresholds[i] - thresholds[i - 1]) > diff:
+                    print("threshold for outliners is {}".format(th))
                     return th
         return -1.7
 
@@ -95,6 +96,7 @@ class preprocessor(BaseEstimator):
         for i, d in enumerate(arr):
             if d < threshold:
                 idxToDelete += [i]
+        print(len(idxToDelete), " data to delete")
         return np.delete(X, idxToDelete, axis=0)
 
     def _featureSelectionFit(self, X, Y):
