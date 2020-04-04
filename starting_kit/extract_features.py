@@ -6,13 +6,23 @@ import seaborn as sns
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
+import panda as pd
+
+from data_io import write_as_csv,read_as_df
+
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 sns.set()
 
 
-class extract_features():
-
+class extract_features(toExtractTo, imagePath = "./public_data_raw/plankton", typeArray = ["train","test","valid"]):
+    
+    imageDf = read_as_df(imagePath)
+    
+    
+    def __init__(self):
+        imageDf = read_as_df(imagePath)
+    
     def _montreImage(self, index):
         imgSampleData = rawData.iloc[index, :-1]
         imgSampleData = np.array(imgSampleData, dtype=np.uint8)
