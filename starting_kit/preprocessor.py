@@ -174,11 +174,11 @@ class Preprocessor(BaseEstimator):
                 return threshold
 
 
-if __name__ == "__main__":
+def tests():
+    # more tests on our jupyter notebook, some functions here were tested on jupyter
     data_name = 'plankton'
     data_dir = './public_data'
 
-    basename = 'Iris'
     D = DataManager(data_name, data_dir, replace_missing=True)
     print("*** Original data ***")
     print(D)
