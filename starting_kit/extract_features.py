@@ -6,7 +6,9 @@ import seaborn as sns
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
-import panda as pd
+import pandas as pd
+from skimage import filters
+
 
 from data_io import write_as_csv,read_as_df
 
@@ -14,14 +16,37 @@ from data_io import write_as_csv,read_as_df
 warnings.simplefilter(action='ignore', category=FutureWarning)
 sns.set()
 
+class Extract_features:
+    featureThatCanBeExtracted = ['perimeter']
+    
+    def __init__(self, toExtractTo = "extracted_features/plankton", imagePath = "./public_data_raw/plankton", typeArray = ["train","test","valid"],toExtract =['perimeter']):
+        self.imagePath = imagePath
+        self.typeArray = typeArray
+        self.extractedDf = pd.DataFrame()
+        self.featuresToExtract = toExtract
+        """
+        for feature in self.featuresToExtract:
+            if not feature in featureThatCanBeExtracted:
+                raise Exception("features asked are not compatible")
+        """
+        self.imageDf = read_as_df(imagePath)
 
-class extract_features(toExtractTo, imagePath = "./public_data_raw/plankton", typeArray = ["train","test","valid"]):
-    
-    imageDf = read_as_df(imagePath)
+        
     
     
-    def __init__(self):
-        imageDf = read_as_df(imagePath)
+    def _extract_features(self)
+        for featureName in self.featuresToExtract:
+            if featureName == self.featureThatCanBeExtracted[0]:
+                extractedDf['perimeter'] = pd.Series([self.extractPerimeterFromImage(get_image(i)) for i in range(len(imageDf))])
+                
+    def _store_features(self):
+        for typeName in self.typeArray:
+            write_as_csv(extractedDf,self.toExtractTo,type = typeName)
+    
+    def _extractPerimeterFromImage(img):
+        img = filters.sobel(img)
+        img = img.ravel()
+        return img.sum()/(len(img))
     
     def _montreImage(self, index):
         imgSampleData = rawData.iloc[index, :-1]
@@ -39,6 +64,7 @@ class extract_features(toExtractTo, imagePath = "./public_data_raw/plankton", ty
         img.save("images / saved / {}.png".format(index))
 
     def _getImage(index):
+        print(index)
         imgSampleData = rawData.iloc[index, :-1]
         imgSampleData = np.array(imgSampleData, dtype=np.uint8)
         imgSampleData = np.resize(imgSampleData, (100, 100))
