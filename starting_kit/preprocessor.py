@@ -47,20 +47,20 @@ class preprocessor(BaseEstimator):
         # TODO : determine best parameters (eg: threshold see below)
         # [x] featureSelection
         # [x] Outliners
-        # [ ] PCA
+        # [x] PCA
         # [ ] add some prints
 
         self.nbFeatures = self._featureSelectionFit(X, Y)
         self.feature_selection = SelectKBest(chi2, self.nbFeatures).fit(X, Y)
+        X2 = self.feature_selection.transform(X)
+        self.pca = PCA(n_components=pcaFeaturesNumber).fit(X2, Y)
         self.thresholdOutliners = self._removeOutlinersFit(X)
-        self.pca = PCA(n_components=pcaFeaturesNumber).fit(X, Y)
         self.fited = True
         return self
 
     def fit_transform(self, X, Y, pcaFeaturesNumber=70):
-        self.fit(X, Y)
         self.fited = True
-        return self.fit(X, Y).transform(X)
+        return self.fit(X, Y, pcaFeaturesNumber).transform(X)
 
     def transform(self, X, Y=None):
         if not self.fited:
@@ -95,7 +95,6 @@ class preprocessor(BaseEstimator):
         for i, d in enumerate(arr):
             if d < threshold:
                 idxToDelete += [i]
-        D.data['X_train'] = np.delete(D.data['X_train'], idxToDelete, axis=0)
         return np.delete(X, idxToDelete, axis=0)
 
     def _featureSelectionFit(self, X, Y):
