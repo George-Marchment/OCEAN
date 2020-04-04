@@ -137,7 +137,6 @@ class BestParam(BaseEstimator):
         tmpclf = GridSearchCV(self.clf, self.listParam, scoring='balanced_accuracy', n_jobs=-1)
         tmpclf.fit(self.X_train, self.Y_train.ravel())
         # print(tmpclf.best_params_)
-        print("Score =", tmpclf.best_score_)
         self.bestParam = tmpclf.best_params_
         self.bestScore = tmpclf.best_score_
 
@@ -174,6 +173,7 @@ class BestClf(BaseEstimator):
         """
         for i in range(len(self.listClf)):
             tmp = BestParam(self.listClf[i], self.listParam[i], X, Y)
+            tmp.train()
             if tmp.bestScore > self.score:
                 self.bestClf = self.listClf[i]
                 self.score = tmp.bestScore
