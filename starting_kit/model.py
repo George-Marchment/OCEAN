@@ -48,6 +48,8 @@ We create our model we supposed is the best one with a given classifier with its
     def __init__(self, clf, param):
         """
         Initialisation of the model
+        @clf : the classifier to initialize
+        @param : the parameters associated with the classifier
         """
         # self.clf = RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False)
         self.clf = clf.set_params(param)
@@ -61,6 +63,8 @@ We create our model we supposed is the best one with a given classifier with its
     def fit(self, X, y):
         """
         Learning from data
+        @X : Our training set of datas
+        @y : the labels of our training set
         """
         # TODO : determine best parameters (eg: threshold see below)
         if not self.fited:
@@ -68,17 +72,33 @@ We create our model we supposed is the best one with a given classifier with its
             self.fited = True
 
     def predict(self, X):
+        """
+        Prediction of the datas with our trained model
+        @X : the testing set predicted by our model
+        """
         return self.clf.predict(X)
 
     def predictProba(self, X):
+        """
+        Same as predict but return the probability of being in a class
+        @X : the testing set predicted by our model
+        """
         return self.clf.predict_proba(X)
 
     def save(self, path="./"):
+        """
+        Saving the trained model
+        @path : the path to save the model
+        """
         file = open(path + '_model.pickle', "wb")
         pickle.dump(self, file)
         file.close()
 
     def load(self, path="./"):
+        """
+        Loading the trained model
+        @path : the path to load the model
+        """
         modelfile = path + '_model.pickle'
         if isfile(modelfile):
             with open(modelfile, 'rb') as f:
@@ -95,6 +115,13 @@ class BestParam(BaseEstimator):
 
 
     def __init__(self, clf, listParam, X_train, Y_train):
+        """
+        Initialiaze the classifier with  a training set of datas
+        @clf : the classifier
+        @listParam : a list of parameters. It has to be called like {'name of the parameter' : (list of different values), ...}
+        @X_train : the training set
+        @Y_train : labels of the training set
+        """
         self.clf = clf
         self.listParam = listParam
         self.X_train = X_train
@@ -122,6 +149,13 @@ class BestClf(BaseEstimator):
 
 
     def __init__(self, listClf, listParam, X, Y):
+        """
+        Initialize ou lists of classifiers and parameters with our training set of datas
+        @listClf : a list of classifiers
+        @listParam : a list of parameters. It has to be called like {'name of the parameter' : (list of different values), ...}
+        @X : the training set
+        @Y : label of the training set
+        """
         self.listClf = listClf
         self.listParam = listParam
         self.X = X
@@ -154,6 +188,13 @@ class test(BaseEstimator):
     def __init__(self, clf, param, X_train, Y_train, X_test, Y_test, scoring_function):
         """
         Initialize the model with a training and a testing set. The scoring_function is really useful here
+        @clf : the classifier you want to test
+        @param : the hyerparameters of your model
+        @X_train : the training set
+        @Y_train : labels of the training set
+        @X_test : the testing set
+        @Y_test : labels of the testing set
+        @scoring_function : a function to get the score of your model
         """
         self.clf = clf
         self.param = param
