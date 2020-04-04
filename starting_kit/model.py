@@ -44,7 +44,6 @@ class model(BaseEstimator):
 We create our model we supposed is the best one with a given classifier with its parameters
 """
 
-
     def __init__(self, clf, param):
         """
         Initialisation of the model
@@ -52,13 +51,12 @@ We create our model we supposed is the best one with a given classifier with its
         @param : the parameters associated with the classifier
         """
         # self.clf = RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False)
-        self.clf = clf.set_params(param)
+        self.clf = clf.set_params(**param)
         self.param = param
         self.show = False
         self.fited = False
         self.n_components = 70
         # self.transformer = [PCA(self.n_components)]
-
 
     def fit(self, X, y):
         """
@@ -113,7 +111,6 @@ class BestParam(BaseEstimator):
     A class to fin the best hyperparameters of a given classifier with given datas
     """
 
-
     def __init__(self, clf, listParam, X_train, Y_train):
         """
         Initialiaze the classifier with  a training set of datas
@@ -128,7 +125,6 @@ class BestParam(BaseEstimator):
         self.Y_train = Y_train
         self.bestParam = None
         self.bestScore = None
-
 
     def train(self):
         """
@@ -145,7 +141,6 @@ class BestClf(BaseEstimator):
     """
     Find the best model with best parameters in a list of classifiers with a list of different parameters
     """
-
 
     def __init__(self, listClf, listParam, X, Y):
         """
@@ -166,13 +161,12 @@ class BestClf(BaseEstimator):
             print("Erreur, la liste de classifieur n'a pas la meme taille que la liste de parametres")
             exit(0)
 
-
     def train(self):
         """
         Find the best model by comparing the different scores
         """
         for i in range(len(self.listClf)):
-            tmp = BestParam(self.listClf[i], self.listParam[i], X, Y)
+            tmp = BestParam(self.listClf[i], self.listParam[i], self.X, self.Y)
             tmp.train()
             if tmp.bestScore > self.score:
                 self.bestClf = self.listClf[i]
@@ -243,7 +237,7 @@ if __name__ == "__main__":
     """
     D = DataManager('plankton', './public_data', replace_missing=True)
     X = D.data['X_train']
-    Y = D.data['Y_train']
+    Y = D.data['Y_train'].ravel()
 
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=42)
 
@@ -280,6 +274,7 @@ if __name__ == "__main__":
     clf = BestClf(model_list, param_list, X_train, Y_train)
     clf.train()
 
+    print("meilleurs param = ", clf.bestParam )
     """
     Le meilleur modèle est initialisé et on teste son score
     """
