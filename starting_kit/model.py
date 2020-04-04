@@ -27,6 +27,7 @@ from sklearn.tree import DecisionTreeClassifier
 import preprocessor as prepro
 from ingestion_program.data_manager import DataManager
 from scoring_program.libscores import get_metric
+from sklearn.pipeline import make_pipeline
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 sns.set()
@@ -44,20 +45,21 @@ class model(BaseEstimator):
 We create our model we supposed is the best one with a given classifier with its parameters
 """
 
-    def __init__(self, clf= RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False) ):
+    def __init__(self, classifier=RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False)):
         """
         Initialisation of the model
         @clf : the classifier to initialize
         @param : the parameters associated with the classifier
         """
-        self.clf = clf
-        #self.clf = clf.set_params(**param)
-        #self.param = param
+        self.clf = classifier
+        # self.clf = clf.set_params(**param)
+        # self.param = param
         self.show = False
         self.fited = False
         self.n_components = 70
         self.pre = prepro.Preprocessor()
 
+        self.pipe = make_pipeline(prepro.Preprocessor(), classifier)
         # self.transformer = [PCA(self.n_components)]
 
     def fit(self, X, y):
@@ -67,25 +69,23 @@ We create our model we supposed is the best one with a given classifier with its
         @y : the labels of our training set
         """
         # TODO : determine best parameters (eg: threshold see below)
-        X_train = pre.fit_transform(X, y)
         if not self.fited:
-            self.clf.fit(X_train, y)
-            self.fited = True
+            self.pipe.fit(X, y)
+        self.fited = True
 
     def predict(self, X):
         """
         Prediction of the datas with our trained model
         @X : the testing set predicted by our model
         """
-        X_test = pre.transform(X)
-        return self.clf.predict(X_test)
+        return self.pipe.predict(X)
 
     def predictProba(self, X):
         """
         Same as predict but return the probability of being in a class
         @X : the testing set predicted by our model
         """
-        return self.clf.predict_proba(X)
+        return self.pipe.predict_proba(X)
 
     def save(self, path="./"):
         """
@@ -273,12 +273,12 @@ if __name__ == "__main__":
     ]
 
     """
-    Trouver le meilleur classifieur avec les meilleurs paramètres
+    Trouver le meilleur clasif __name__ ==sifieur avec les meilleurs paramètres
     """
     clf = BestClf(model_list, param_list, X_train, Y_train)
     clf.train()
 
-    print("meilleurs param = ", clf.bestParam )
+    print("meilleurs param = ", clf.bestParam)
     """
     Le meilleur modèle est initialisé et on teste son score
     """
