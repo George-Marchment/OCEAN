@@ -33,7 +33,7 @@ with warnings.catch_warnings():
     from sklearn.base import BaseEstimator
 
 
-class preprocessor(BaseEstimator):
+class Preprocessor(BaseEstimator):
 
     def __init__(self):
         self.show = False
