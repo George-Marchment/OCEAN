@@ -79,11 +79,11 @@ class preprocessor(BaseEstimator):
         clf.fit_predict(X)
         arr = clf.negative_outlier_factor_.copy()
         thresholds = np.flip(np.sort(arr))
-        diff = (max(arr) - min(arr)) / 4000.
-        for i, th in enumerate(thresholds):
-            if i > 10 and abs(thresholds[i] - thresholds[i - 1]) > diff:
-                return th
-        print("error")
+        for diff in (max(arr) - min(arr)) / np.flip(np.arange(1, 4000, 100)):
+            for i, th in enumerate(thresholds):
+                if i > 10 and abs(thresholds[i] - thresholds[i - 1]) > diff:
+                    return th
+        return -1.7
 
     def _removeOutliners(self, X):
         threshold = self.thresholdOutliners
