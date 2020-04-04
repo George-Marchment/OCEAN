@@ -44,15 +44,15 @@ class model(BaseEstimator):
 We create our model we supposed is the best one with a given classifier with its parameters
 """
 
-    def __init__(self, clf, param):
+    def __init__(self, clf= RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False) ):
         """
         Initialisation of the model
         @clf : the classifier to initialize
         @param : the parameters associated with the classifier
         """
-        # self.clf = RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False)
-        self.clf = clf.set_params(**param)
-        self.param = param
+        self.clf = clf
+        #self.clf = clf.set_params(**param)
+        #self.param = param
         self.show = False
         self.fited = False
         self.n_components = 70
