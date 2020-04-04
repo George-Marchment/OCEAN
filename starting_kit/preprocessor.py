@@ -68,7 +68,7 @@ class Preprocessor(BaseEstimator):
             X the data transformed
         """
         self.fited = True
-        return self.fit(X, Y, pcaFeaturesNumber).transform(X)
+        return self.fit(X, Y, pcaFeaturesNumber).transform(X, Y)
 
     def transform(self, X, Y=None):
         """ Transform the data from a previous learn
