@@ -36,13 +36,11 @@ class preprocessor(BaseEstimator):
     def __init__(self):
         self.show = False
         self.fited = False
-        self.n_components = 70
-        self.transformer = [PCA(self.n_components)]
 
     def extract_features(self):
         ...
 
-    def fit(self, X, Y):
+    def fit(self, X, Y, pcaFeaturesNumber=70):
         """
         Learning from data
         """
@@ -55,11 +53,11 @@ class preprocessor(BaseEstimator):
         self.nbFeatures = self._featureSelectionFit(X, Y)
         self.feature_selection = SelectKBest(chi2, self.nbFeatures).fit(X, Y)
         self.thresholdOutliners = self._removeOutlinersFit(X)
-
+        self.pca = PCA(n_components=pcaFeaturesNumber).fit(X, Y)
         self.fited = True
         return self
 
-    def fit_transform(self, X, Y):
+    def fit_transform(self, X, Y, pcaFeaturesNumber=70):
         self.fit(X, Y)
         self.fited = True
         return self.fit(X, Y).transform(X)
@@ -69,6 +67,7 @@ class preprocessor(BaseEstimator):
             raise Exception("Cannot transform is data is not fit")
         else:
             X = self.feature_selection.transform(X)
+            X = self.pca.transform(X)
             X = self._removeOutliners(X)
             return X
 
