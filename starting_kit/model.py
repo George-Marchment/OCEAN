@@ -24,10 +24,10 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 
-import preprocessor as prepro
-from ingestion_program.data_manager import DataManager
-from scoring_program.libscores import get_metric
-from sklearn.pipeline import make_pipeline
+from starting_kit.preprocessor import Preprocessor
+from starting_kit.ingestion_program.data_manager import DataManager
+from starting_kit.scoring_program.libscores import get_metric
+from sklearn.pipeline import Pipeline
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 sns.set()
@@ -57,9 +57,8 @@ We create our model we supposed is the best one with a given classifier with its
         self.show = False
         self.fited = False
         self.n_components = 70
-        self.pre = prepro.Preprocessor()
-
-        self.pipe = make_pipeline(prepro.Preprocessor(), classifier)
+        self.pipe = Pipeline([('prepro',Preprocessor()),
+                              ('clf',classifier)])
         # self.transformer = [PCA(self.n_components)]
 
     def fit(self, X, y):
@@ -86,6 +85,10 @@ We create our model we supposed is the best one with a given classifier with its
         @X : the testing set predicted by our model
         """
         return self.pipe.predict_proba(X)
+
+    def printScore(self, scoringFunct, X, y):
+        print("AAAAAAAAAAAA")
+        print(scoringFunct(X, y))
 
     def save(self, path="./"):
         """
@@ -245,6 +248,19 @@ if __name__ == "__main__":
 
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=42)
 
+    print("X train size:", len(X_train))
+    print("X test size:", len(X_test))
+    print("Y train size:", len(Y_train))
+    print("Y test size:", len(Y_test))
+
+    metric_name, scoring_function = get_metric()
+
+    a = model(RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False))
+    a.fit(X_train, Y_train)
+    aP = a.predict(X_test)
+    sc = make_scorer(scoring_function)
+    a.printScore(sc,aP, Y_train)
+
     """
     preprocessing fatas
     """
@@ -287,7 +303,7 @@ if __name__ == "__main__":
     M.fit(X_train, Y_train)
     m_train = M.predict(X_train)
 
-    metric_name, scoring_function = get_metric()
+
 
     print('Training score for the', metric_name, 'metric = %5.4f' % scoring_function(Y_test, m_train))
     scoresM = cross_val_score(M, X_train, Y_train.ravel(), cv=5, scoring=make_scorer(scoring_function), n_jobs=-1)
