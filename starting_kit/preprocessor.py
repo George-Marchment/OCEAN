@@ -93,10 +93,10 @@ class Preprocessor(BaseEstimator):
         if not self.fited:
             raise Exception("Cannot transform data that is not fit")
         else:
-            if X.shape[1] == self.Xshape1:
+            if X.shape[1] == self.Xshape1 or Y is not None:
                 X = self.feature_selection.transform(X)
                 X = self.pca.transform(X)
-            if X.shape[0] == self.Xshape0:
+            if X.shape[0] == self.Xshape0 or Y is not None:
                 X = self._removeOutliners(X)
             if Y is not None:
                 Y = self._removeOutliners(Y)

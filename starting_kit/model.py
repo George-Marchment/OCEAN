@@ -280,7 +280,8 @@ if __name__ == "__main__":
 
     a = model(RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False))
     X_train, Y_train = a.fit_transform(X_train, Y_train)
-    aP = a.predict(X_train)
+    X_test, Y_test = a.transform(X_test, Y_test)
+    aP = a.predict(X_test)
     sc = make_scorer(scoring_function)
     a.printScore(sc,aP, Y_train)
 
