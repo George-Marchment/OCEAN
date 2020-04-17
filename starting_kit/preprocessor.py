@@ -63,6 +63,7 @@ class Preprocessor(BaseEstimator):
         self.pca = PCA(n_components=pcaFeaturesNumber).fit(X2, Y)
         self.thresholdOutliners = self._removeOutlinersFit(X)
         self.fited = True
+        self.Xshape0 = X.shape[0]
         self.Xshape1 = X.shape[1]
         return self
 
@@ -90,12 +91,13 @@ class Preprocessor(BaseEstimator):
             Y the data transformed (optionnal)
         """
         if not self.fited:
-            raise Exception("Cannot transform is data is not fit")
+            raise Exception("Cannot transform data that is not fit")
         else:
             if X.shape[1] == self.Xshape1:
                 X = self.feature_selection.transform(X)
                 X = self.pca.transform(X)
-            X = self._removeOutliners(X)
+            if X.shape[0] == self.Xshape0:
+                X = self._removeOutliners(X)
             if Y is not None:
                 Y = self._removeOutliners(Y)
                 return X, Y
@@ -118,7 +120,7 @@ class Preprocessor(BaseEstimator):
         for diff in (max(arr) - min(arr)) / np.flip(np.arange(1, 4000, 100)):
             for i, th in enumerate(thresholds):
                 if i > 10 and abs(thresholds[i] - thresholds[i - 1]) > diff:
-                    print("threshold for outliners is {}".format(th))
+                    print("prepro: threshold for outliners is {}".format(th))
                     return th
         return -1.7
 
@@ -138,7 +140,7 @@ class Preprocessor(BaseEstimator):
         for i, d in enumerate(arr):
             if d < threshold:
                 idxToDelete += [i]
-        print(len(idxToDelete), " data to delete")
+        print("prepro: ", len(idxToDelete), " data to delete")
         return np.delete(X, idxToDelete, axis=0)
 
     def _featureSelectionFit(self, X, Y):
@@ -158,7 +160,7 @@ class Preprocessor(BaseEstimator):
             if(i < threshold):
                 nbFeatures += 1
 
-        print("best number of features (with threshold = {}) is {}".format(threshold, nbFeatures))
+        print("prepro: best number of features (with threshold = {}) is {}".format(threshold, nbFeatures))
         return nbFeatures
 
     def _best_threshold_featureselect(self, pvalue, x, y):

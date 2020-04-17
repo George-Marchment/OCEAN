@@ -24,9 +24,9 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 
-from starting_kit.preprocessor import Preprocessor
-from starting_kit.ingestion_program.data_manager import DataManager
-from starting_kit.scoring_program.libscores import get_metric
+from preprocessor import Preprocessor
+from ingestion_program.data_manager import DataManager
+from scoring_program.libscores import get_metric
 from sklearn.pipeline import Pipeline
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -54,12 +54,13 @@ We create our model we supposed is the best one with a given classifier with its
         self.clf = classifier
         # self.clf = clf.set_params(**param)
         # self.param = param
-        self.show = False
         self.fited = False
+        self.fitclf = False
         self.n_components = 70
-        self.pipe = Pipeline([('prepro',Preprocessor()),
-                              ('clf',classifier)])
-        # self.transformer = [PCA(self.n_components)]
+        self.prepro = Preprocessor()
+        #self.pipe = Pipeline([('prepro',Preprocessor()),
+        #                      ('clf',classifier)])
+        #self.transformer = [PCA(self.n_components)]
 
     def fit(self, X, y):
         """
@@ -67,17 +68,39 @@ We create our model we supposed is the best one with a given classifier with its
         @X : Our training set of datas
         @y : the labels of our training set
         """
-        # TODO : determine best parameters (eg: threshold see below)
-        if not self.fited:
-            self.pipe.fit(X, y)
+        #self.pipe.fit(X, y)
+        self.prepro.fit(X,y)
         self.fited = True
+
+    def transform(self, X, Y):
+        """
+        Transforming data
+        @X : Our training set of datas
+        @y : the labels of our training set
+        """
+        X, Y = self.prepro.transform(X, Y)
+        print(" X : ", X.shape, " Y : ", Y.shape)
+        self.clf.fit(X,Y.ravel())
+        self.fitclf = True
+        return X, Y
+
+    def fit_transform(self, X, Y):
+        """
+        Learning and transform data 
+        @X : Our training set of datas
+        @y : the labels of our training set
+        """
+        self.fit(X, Y)
+        return self.transform(X, Y)
 
     def predict(self, X):
         """
         Prediction of the datas with our trained model
         @X : the testing set predicted by our model
         """
-        return self.pipe.predict(X)
+        if not self.fitclf:
+            raise Exception("Data must be transformed before performing classifier prediction")
+        return self.clf.predict(X)
 
     def predictProba(self, X):
         """
@@ -244,29 +267,31 @@ if __name__ == "__main__":
     """
     D = DataManager('plankton', './public_data', replace_missing=True)
     X = D.data['X_train']
-    Y = D.data['Y_train'].ravel()
+    Y = D.data['Y_train']
 
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=42)
 
-    print("X train size:", len(X_train))
-    print("X test size:", len(X_test))
-    print("Y train size:", len(Y_train))
-    print("Y test size:", len(Y_test))
+    print("X train shape:", X_train.shape)
+    print("X test shape:", X_test.shape)
+    print("Y train shape:", Y_train.shape)
+    print("Y test shape:", Y_test.shape)
 
     metric_name, scoring_function = get_metric()
 
     a = model(RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False))
-    a.fit(X_train, Y_train)
-    aP = a.predict(X_test)
+    X_train, Y_train = a.fit_transform(X_train, Y_train)
+    aP = a.predict(X_train)
     sc = make_scorer(scoring_function)
     a.printScore(sc,aP, Y_train)
 
     """
     preprocessing fatas
     """
-    pre = prepro.Preprocessor()
-    X_train = pre.fit_transform(X_train, Y_train)
+    pre = Preprocessor()
+    X_train, Y_train = pre.fit_transform(X_train, Y_train)
     X_test = pre.transform(X_test)
+
+    print(X_train.shape, " ", Y_train.shape, " ", X_test.shape)
 
     model_list = [
         Perceptron(),
