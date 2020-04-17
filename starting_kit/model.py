@@ -59,7 +59,6 @@ We create our model we supposed is the best one with a given classifier with its
         self.prepro = Preprocessor()
         #self.pipe = Pipeline([('prepro',Preprocessor()),
         #                      ('clf',classifier)])
-        #self.transformer = [PCA(self.n_components)]
 
     def fit(self, X, Y):
         """
@@ -277,15 +276,15 @@ if __name__ == "__main__":
 
     metric_name, scoring_function = get_metric()
 
-    a = model(RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False))
-    a.fit(X_train, Y_train)
-    #X_train, Y_train = a.transform(X_train, Y_train)
+    M = model(RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False))
+    M.fit(X_train, Y_train)
+    #X_train, Y_train = M.transform(X_train, Y_train)
     #X_test, Y_test = a.transform(X_test, Y_test)
-    aP = a.predict(X_test)
+    aP = M.predict(X_test)
     metric_name, scoring_function = get_metric()
     print('Using scoring metric:', metric_name)
-    #sc = make_scorer(scoring_function)
-    #a.printScore(sc,aP, Y_train)
+    sc = make_scorer(scoring_function)
+    M.printScore(sc,aP, Y_train)
 
     #"""
     #preprocessing fatas
