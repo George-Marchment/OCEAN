@@ -3,6 +3,7 @@ Created on Fri Mar 27 17:49:23 2020
 @author: Jérôme, Pierre, George, Raphaël, Paul, Luqman
 Last revised: Avr 04, 2020
 Revision History :
+    Avr 17, 2020 : Jérôme : moving tests to another file, add security to remove features only on X
     Avr 05, 2020 : Jérôme
     Avr 04, 2020 : Jérôme
     Mar 27, 2020 : Jérôme
@@ -13,8 +14,17 @@ First, we reduce the number of features in a clever way, we keep the features th
 After, we apply the PCA algorithm to reduce the number of features without losing data. It is used to reduce the calculation size.
 The last step is the remove outliers, it is the data considered less usefull to analyse. Use perform a statistical test called chi2 to remove outliers.
 """
+
+from sys import path
+model_dir = 'sample_code_submission/'
+result_dir = 'sample_result_submission/'
+problem_dir = 'ingestion_program/'
+score_dir = 'scoring_program/'
+path.append(model_dir)
+path.append(problem_dir)
+path.append(score_dir)
+
 import warnings
-import paths
 from data_manager import DataManager
 
 from sklearn.feature_selection import chi2
@@ -23,10 +33,8 @@ from sklearn.decomposition import PCA
 from sklearn.neighbors import LocalOutlierFactor
 import seaborn as sns
 import numpy as np
-
 warnings.simplefilter(action='ignore', category=FutureWarning)
 sns.set()
-paths
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -55,6 +63,7 @@ class Preprocessor(BaseEstimator):
         self.pca = PCA(n_components=pcaFeaturesNumber).fit(X2, Y)
         self.thresholdOutliners = self._removeOutlinersFit(X)
         self.fited = True
+        self.Xshape1 = X.shape[1]
         return self
 
     def fit_transform(self, X, Y, pcaFeaturesNumber=70):
@@ -83,11 +92,11 @@ class Preprocessor(BaseEstimator):
         if not self.fited:
             raise Exception("Cannot transform is data is not fit")
         else:
-            X = self.feature_selection.transform(X)
+            if X.shape[1] == self.Xshape1:
+                X = self.feature_selection.transform(X)
             X = self.pca.transform(X)
             X = self._removeOutliners(X)
             if Y is not None:
-                print("remove outliners for Y")
                 Y = self._removeOutliners(Y)
                 return X, Y
             return X
@@ -174,28 +183,3 @@ class Preprocessor(BaseEstimator):
                 return threshold
 
 
-def tests():
-    # more tests on our jupyter notebook, some functions here were tested on jupyter
-    data_name = 'plankton'
-    data_dir = './public_data'
-
-    D = DataManager(data_name, data_dir, replace_missing=True)
-    print("*** Original data ***")
-    print(D)
-
-    Prepro = Preprocessor()
-
-    # Preprocess on the data and load it back into D
-    pp = Prepro.fit(D.data['X_train'], D.data['Y_train'])
-    X, Y = pp.transform(D.data['X_train'], D.data['Y_train'])
-    print(X.shape, Y.shape)
-    D.data['X_train'] = Prepro.fit_transform(D.data['X_train'], D.data['Y_train'])
-    D.data['X_valid'] = Prepro.transform(D.data['X_valid'])
-    D.data['X_test'] = Prepro.transform(D.data['X_test'])
-
-    # Here show something that proves that the preprocessing worked fine
-    print("*** Transformed data ***")
-    print(D)
-
-
-tests()
