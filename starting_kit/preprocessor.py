@@ -78,7 +78,7 @@ class Preprocessor(BaseEstimator):
             X the data transformed
         """
         self.fited = True
-        return self.fit(X, Y, pcaFeaturesNumber).transform(X)
+        return self.fit(X, Y, pcaFeaturesNumber).transform(X, Y)
 
     def transform(self, X, Y=None):
         """ Transform the data from a previous learn
@@ -93,7 +93,7 @@ class Preprocessor(BaseEstimator):
         if not self.fited:
             raise Exception("Cannot transform data that is not fit")
         else:
-            if X.shape[1] == self.Xshape1 or Y is not None:
+            if X.shape[1] == self.Xshape1 or Y is not None: # X is actually a Y
                 X = self.feature_selection.transform(X)
                 X = self.pca.transform(X)
             if X.shape[0] == self.Xshape0 or Y is not None:
