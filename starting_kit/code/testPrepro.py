@@ -41,7 +41,7 @@ def tests():
     #pp = Prepro.fit(D.data['X_train'], D.data['Y_train'])
     #X, Y = pp.transform(D.data['X_train'], D.data['Y_train'])
     #print(X.shape, Y.shape)
-    D.data['X_train'] = Prepro.fit_transform(D.data['X_train'], D.data['Y_train'])
+    D.data['X_train'], D.data['Y_train'] = Prepro.fit_transform(D.data['X_train'], D.data['Y_train'])
     D.data['Y_train'] = Prepro.transform(D.data['Y_train'])
     D.data['X_valid'] = Prepro.transform(D.data['X_valid'])
     D.data['X_test'] = Prepro.transform(D.data['X_test'])

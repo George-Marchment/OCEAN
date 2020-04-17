@@ -15,18 +15,10 @@ import warnings
 from os.path import isfile
 
 import seaborn as sns
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
-from sklearn.linear_model import Perceptron
-from sklearn.metrics import make_scorer
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.tree import DecisionTreeClassifier
 
 from preprocessor import Preprocessor
-from ingestion_program.data_manager import DataManager
-from sklearn.pipeline import Pipeline
 from sklearn.base import BaseEstimator
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -36,8 +28,6 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     # Note: if zDataManager is not ready, use the mother class DataManager
 
-
-# NEED SAVE & LOAD
 
 class model(BaseEstimator):
     """
@@ -53,10 +43,10 @@ We create our model we supposed is the best one with a given classifier with its
         self.clf = classifier
         # self.clf = clf.set_params(**param)
         # self.param = param
-        self.fited = False
+        self.is_trained = False
         self.n_components = 70
         self.prepro = Preprocessor()
-        #self.pipe = Pipeline([('prepro',Preprocessor()),
+        # self.pipe = Pipeline([('prepro',Preprocessor()),
         #                      ('clf',classifier)])
 
     def fit(self, X, Y):
@@ -65,10 +55,10 @@ We create our model we supposed is the best one with a given classifier with its
         @X : Our training set of datas
         @Y : the labels of our training set
         """
-        self.fited = False
-        X, Y = self.prepro.fit_transform(X,Y)
-        self.clf.fit(X,Y.ravel())
-        self.fited = True
+        self.is_trained = False
+        X, Y = self.prepro.fit_transform(X, Y)
+        self.clf.fit(X, Y.ravel())
+        self.is_trained = True
 
     def transform(self, X, Y):
         """
@@ -82,7 +72,7 @@ We create our model we supposed is the best one with a given classifier with its
 
     def fit_transform(self, X, Y):
         """
-        Learning and transform data 
+        Learning and transform data
         @X : Our training set of datas
         @y : the labels of our training set
         """
@@ -94,8 +84,8 @@ We create our model we supposed is the best one with a given classifier with its
         Prediction of the datas with our trained model
         @X : the testing set predicted by our model
         """
-        #if not self.fited:
-        #    raise Exception("Data must be fit before performing classifier prediction")
+        if not self.is_trained:
+            raise Exception("Data must be fit before performing classifier prediction")
         X = self.prepro.transform(X)
         return self.clf.predict(X)
 
