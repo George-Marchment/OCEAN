@@ -94,7 +94,7 @@ class Preprocessor(BaseEstimator):
         else:
             if X.shape[1] == self.Xshape1:
                 X = self.feature_selection.transform(X)
-            X = self.pca.transform(X)
+                X = self.pca.transform(X)
             X = self._removeOutliners(X)
             if Y is not None:
                 Y = self._removeOutliners(Y)
