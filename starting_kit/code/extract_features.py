@@ -34,7 +34,7 @@ class Extract_features:
         
     
     
-    def _extract_features(self)
+    def _extract_features(self):
         for featureName in self.featuresToExtract:
             if featureName == self.featureThatCanBeExtracted[0]:
                 extractedDf['perimeter'] = pd.Series([self.extractPerimeterFromImage(get_image(i)) for i in range(len(imageDf))])

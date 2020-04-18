@@ -1,4 +1,6 @@
+# code for mutliprecessing can be found here : https://sebastianraschka.com/Articles/2014_multiprocessing.html
 from model import model
+from preprocessor import Preprocessor
 import warnings
 
 import seaborn as sns
@@ -25,7 +27,7 @@ D = DataManager('plankton', './public_data', replace_missing=True)
 X = D.data['X_train']
 Y = D.data['Y_train']
 
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=42)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.5, random_state=42)
 
 print("X train shape:", X_train.shape)
 print("X test shape:", X_test.shape)
@@ -35,13 +37,9 @@ print("Y test shape:", Y_test.shape)
 metric_name, scoring_function = get_metric()
 
 print('Using scoring metric:', metric_name)
-M = model(RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False))
 
-# pcaTab = np.arange(5, 200, 5)
-# nbExec = 5
-
-pcaTab = np.arange(5, 200, 40)
-nbExec = 2
+pcaTab = np.arange(5, 200, 5)
+nbExec = 5
 
 # Define an output queue
 output = mp.Queue()
@@ -50,13 +48,14 @@ output = mp.Queue()
 
 
 def getScore(nbPCAFeat, pos, output):
+    M = model(RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False), prepro=Preprocessor(pcaFeaturesNumber=nbPCAFeat, show=False, PCA=True, Outliers=False, FeatureSelection=False))
     score = 0
     for i in range(nbExec):
-        M.fit(X_train, Y_train, nbPCAFeat)
+        M.fit(X_train, Y_train)
         aP = M.predict(X_test)
         metric_name, scoring_function = get_metric()
         score += scoring_function(Y_test, aP)
-    print(score)
+    print(nbPCAFeat, ":", score / nbExec)
     output.put((pos, score / nbExec))
 
 
@@ -79,7 +78,7 @@ results = [r[1] for r in results]
 
 fig, ax = plt.subplots(1, 1, figsize=(10, 10))
 ax.plot(pcaTab, results)
-ax.set_xlegend("number of features")
-ax.set_ylegend("score")
+ax.set_xlabel("dimension of features")
+ax.set_ylabel("score")
 ax.set_title("Graph showing the score depending of the number of features, calculated with PCA")
-plt.savefile("best_features_pca")
+plt.savefig("best_features_pca")

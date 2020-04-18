@@ -43,10 +43,13 @@ with warnings.catch_warnings():
 
 class Preprocessor(BaseEstimator):
 
-    def __init__(self, show=False, pcaFeaturesNumber=40):
+    def __init__(self, show=False, pcaFeaturesNumber=40, PCA=False, Outliers=True, FeatureSelection=False):
         self.show = show
         self.fited = False
         self.pcaFeaturesNumber = pcaFeaturesNumber
+        self.PCA = PCA
+        self.Outliers = Outliers
+        self.FeatureSelection = FeatureSelection
 
     def fit(self, X, Y):
         """ Learns from data, call fit methods of every aglorithm
@@ -58,12 +61,15 @@ class Preprocessor(BaseEstimator):
         Returns
             the class with everything fitted
         """
-        self.pca = PCA(n_components=self.pcaFeaturesNumber).fit(X, Y)
+        if self.PCA:
+            self.pca = PCA(n_components=self.pcaFeaturesNumber).fit(X, Y)
 
-        self.thresholdOutliers = self._removeOutliersFit(X)
+        if self.Outliers:
+            self.thresholdOutliers = self._removeOutliersFit(X)
 
-        # self.nbFeatures = self._featureSelectionFit(X, Y)
-        # self.feature_selection = SelectKBest(chi2, self.nbFeatures).fit(X, Y)
+        if self.FeatureSelection:
+            self.nbFeatures = self._featureSelectionFit(X, Y)
+            self.feature_selection = SelectKBest(chi2, self.nbFeatures).fit(X, Y)
 
         self.fited = True
         self.Xshape0 = X.shape[0]
@@ -97,12 +103,16 @@ class Preprocessor(BaseEstimator):
             raise Exception("Cannot transform data that is not fit")
         else:
             if X.shape[1] == self.Xshape1 or Y is not None:  # X is a label tab
-                X = self.pca.transform(X)
-                # X = self.feature_selection.transform(X)
+                if self.PCA:
+                    X = self.pca.transform(X)
+                if self.FeatureSelection:
+                    X = self.feature_selection.transform(X)
             if X.shape[0] == self.Xshape0 or Y is not None:
-                X = self._removeOutliers(X)
+                if self.Outliers:
+                    X = self._removeOutliers(X)
             if Y is not None:
-                Y = self._removeOutliers(Y)
+                if self.Outliers:
+                    Y = self._removeOutliers(Y)
                 return X, Y
             return X
 
