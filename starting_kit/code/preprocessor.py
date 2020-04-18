@@ -61,15 +61,17 @@ class Preprocessor(BaseEstimator):
         Returns
             the class with everything fitted
         """
+
+        if self.FeatureSelection:
+            self.nbFeatures = self._featureSelectionFit(X, Y)
+            self.feature_selection = SelectKBest(chi2, self.nbFeatures).fit(X, Y)
+            X = self.feature_selection.transform(X)
+
         if self.PCA:
             self.pca = PCA(n_components=self.pcaFeaturesNumber).fit(X, Y)
 
         if self.Outliers:
             self.thresholdOutliers = self._removeOutliersFit(X)
-
-        if self.FeatureSelection:
-            self.nbFeatures = self._featureSelectionFit(X, Y)
-            self.feature_selection = SelectKBest(chi2, self.nbFeatures).fit(X, Y)
 
         self.fited = True
         self.Xshape0 = X.shape[0]
@@ -103,10 +105,10 @@ class Preprocessor(BaseEstimator):
             raise Exception("Cannot transform data that is not fit")
         else:
             if X.shape[1] == self.Xshape1 or Y is not None:  # X is a label tab
-                if self.PCA:
-                    X = self.pca.transform(X)
                 if self.FeatureSelection:
                     X = self.feature_selection.transform(X)
+                if self.PCA:
+                    X = self.pca.transform(X)
             if X.shape[0] == self.Xshape0 or Y is not None:
                 if self.Outliers:
                     X = self._removeOutliers(X)

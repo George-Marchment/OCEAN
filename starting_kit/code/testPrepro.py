@@ -20,7 +20,7 @@ def tests():
     print("*** Original data ***")
     print(D)
 
-    Prepro = Preprocessor(show=True)
+    Prepro = Preprocessor(show=True, PCA=True, FeatureSelection=True)
 
     # Preprocess on the data and load it back into D
     # pp = Prepro.fit(D.data['X_train'], D.data['Y_train'])
