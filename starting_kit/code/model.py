@@ -34,7 +34,7 @@ class model(BaseEstimator):
 We create our model we supposed is the best one with a given classifier with its parameters
 """
 
-    def __init__(self, classifier=RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False)):
+    def __init__(self, classifier=RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False), prepro=Preprocessor()):
         """
         Initialisation of the model
         @clf : the classifier to initialize
@@ -45,7 +45,7 @@ We create our model we supposed is the best one with a given classifier with its
         # self.param = param
         self.is_trained = False
         self.n_components = 70
-        self.prepro = Preprocessor()
+        self.prepro = prepro
         # self.pipe = Pipeline([('prepro',Preprocessor()),
         #                      ('clf',classifier)])
 
@@ -70,7 +70,7 @@ We create our model we supposed is the best one with a given classifier with its
         print(" X : ", X.shape, " Y : ", Y.shape)
         return X, Y
 
-    def fit_transform(self, X, Y):
+    def fit_transform(self, X, Y, nbPCAFeatures=None):
         """
         Learning and transform data
         @X : Our training set of datas

@@ -43,11 +43,12 @@ with warnings.catch_warnings():
 
 class Preprocessor(BaseEstimator):
 
-    def __init__(self):
-        self.show = False
+    def __init__(self, show=False, pcaFeaturesNumber=40):
+        self.show = show
         self.fited = False
+        self.pcaFeaturesNumber = pcaFeaturesNumber
 
-    def fit(self, X, Y, pcaFeaturesNumber=70):
+    def fit(self, X, Y):
         """ Learns from data, call fit methods of every aglorithm
 
         Parameters :
@@ -57,17 +58,19 @@ class Preprocessor(BaseEstimator):
         Returns
             the class with everything fitted
         """
-        self.nbFeatures = self._featureSelectionFit(X, Y)
-        self.feature_selection = SelectKBest(chi2, self.nbFeatures).fit(X, Y)
-        X2 = self.feature_selection.transform(X)
-        self.pca = PCA(n_components=pcaFeaturesNumber).fit(X2, Y)
-        self.thresholdOutliners = self._removeOutlinersFit(X)
+        self.pca = PCA(n_components=self.pcaFeaturesNumber).fit(X, Y)
+
+        self.thresholdOutliers = self._removeOutliersFit(X)
+
+        # self.nbFeatures = self._featureSelectionFit(X, Y)
+        # self.feature_selection = SelectKBest(chi2, self.nbFeatures).fit(X, Y)
+
         self.fited = True
         self.Xshape0 = X.shape[0]
         self.Xshape1 = X.shape[1]
         return self
 
-    def fit_transform(self, X, Y, pcaFeaturesNumber=70):
+    def fit_transform(self, X, Y):
         """ Learns from data, call fit methods of every aglorithm and transform the data
 
         Parameters :
@@ -78,7 +81,7 @@ class Preprocessor(BaseEstimator):
             X the data transformed
         """
         self.fited = True
-        return self.fit(X, Y, pcaFeaturesNumber).transform(X, Y)
+        return self.fit(X, Y).transform(X, Y)
 
     def transform(self, X, Y=None):
         """ Transform the data from a previous learn
@@ -93,18 +96,18 @@ class Preprocessor(BaseEstimator):
         if not self.fited:
             raise Exception("Cannot transform data that is not fit")
         else:
-            if X.shape[1] == self.Xshape1 or Y is not None: # X is actually a Y
-                X = self.feature_selection.transform(X)
+            if X.shape[1] == self.Xshape1 or Y is not None:  # X is a label tab
                 X = self.pca.transform(X)
+                # X = self.feature_selection.transform(X)
             if X.shape[0] == self.Xshape0 or Y is not None:
-                X = self._removeOutliners(X)
+                X = self._removeOutliers(X)
             if Y is not None:
-                Y = self._removeOutliners(Y)
+                Y = self._removeOutliers(Y)
                 return X, Y
             return X
 
-    def _removeOutlinersFit(self, X):
-        """From X, _removeOutlinersFit calculates the threshold to remove outliers
+    def _removeOutliersFit(self, X):
+        """From X, _removeOutliersFit calculates the threshold to remove outliers
 
         Parameters :
             X the data
@@ -120,11 +123,12 @@ class Preprocessor(BaseEstimator):
         for diff in (max(arr) - min(arr)) / np.flip(np.arange(1, 4000, 100)):
             for i, th in enumerate(thresholds):
                 if i > 10 and abs(thresholds[i] - thresholds[i - 1]) > diff:
-                    print("prepro: threshold for outliners is {}".format(th))
+                    if self.show:
+                        print("prepro: threshold for outliers is {}".format(th))
                     return th
         return -1.7
 
-    def _removeOutliners(self, X):
+    def _removeOutliers(self, X):
         """ Removes to outliers of X
 
         Parameters :
@@ -133,14 +137,15 @@ class Preprocessor(BaseEstimator):
         Returns :
             X without the outliers
         """
-        threshold = self.thresholdOutliners
+        threshold = self.thresholdOutliers
         arr = self.arr
 
         idxToDelete = []
         for i, d in enumerate(arr):
             if d < threshold:
                 idxToDelete += [i]
-        print("prepro: ", len(idxToDelete), " data to delete")
+        if self.show:
+            print("prepro: ", len(idxToDelete), " data to delete")
         return np.delete(X, idxToDelete, axis=0)
 
     def _featureSelectionFit(self, X, Y):
@@ -160,7 +165,8 @@ class Preprocessor(BaseEstimator):
             if(i < threshold):
                 nbFeatures += 1
 
-        print("prepro: best number of features (with threshold = {}) is {}".format(threshold, nbFeatures))
+        if self.show:
+            print("prepro: best number of features (with threshold = {}) is {}".format(threshold, nbFeatures))
         return nbFeatures
 
     def _best_threshold_featureselect(self, pvalue, x, y):
@@ -183,5 +189,3 @@ class Preprocessor(BaseEstimator):
             res[i] = k
             if i > 1 and res[i] - res[i - 1] < 1:
                 return threshold
-
-
