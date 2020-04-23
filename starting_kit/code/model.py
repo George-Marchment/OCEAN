@@ -23,14 +23,12 @@ from sklearn.model_selection import GridSearchCV
 from preprocessor import Preprocessor
 from sklearn.base import BaseEstimator
 
-
-
 class model(BaseEstimator):
     """
 We create our model we supposed is the best one with a given classifier with its parameters
 """
 
-    def __init__(self, classifier=RandomForestClassifier(n_estimators=310, bootstrap=False, warm_start=False), prepro=Preprocessor()):
+    def __init__(self, classifier=RandomForestClassifier(n_estimators=320, bootstrap=False, warm_start=True, random_state=42), prepro=Preprocessor()):
         """
         Initialisation of the model
         @clf : the classifier to initialize
@@ -42,7 +40,7 @@ We create our model we supposed is the best one with a given classifier with its
         self.prepro = prepro
         # self.pipe = Pipeline([('prepro',Preprocessor()),
         #                      ('clf',classifier)])
-        # The pipelin above was not working so we removed it and used the prepro without pipeline
+        # The pipeline above was not working so we removed it and used the prepro without pipeline
 
     def fit(self, X, Y):
         """
@@ -89,7 +87,7 @@ We create our model we supposed is the best one with a given classifier with its
         Same as predict but return the probability of being in a class
         @X : the testing set predicted by our model
         """
-        return self.pipe.predict_proba(X)
+        return self.clf.predict_proba(X)
 
     def printScore(self, scoringFunct, X, y):
         print(scoringFunct(X, y))
@@ -122,7 +120,7 @@ class BestParam(BaseEstimator):
     A class to fin the best hyperparameters of a given classifier with given datas
     """
 
-    def __init__(self, clf, listParam, X_train, Y_train):
+    def __init__(self, clf, listParam, X_train, Y_train, prepro = Preprocessor()):
         """
         Initialiaze the classifier with  a training set of datas
         @clf : the classifier
@@ -131,6 +129,7 @@ class BestParam(BaseEstimator):
         @Y_train : labels of the training set
         """
         self.clf = clf
+        self.prepro = prepro
         self.listParam = listParam
         self.X_train = X_train
         self.Y_train = Y_train
@@ -142,7 +141,8 @@ class BestParam(BaseEstimator):
         Use the gridSearchCV algorithm to train our classifier and find its best parameters
         """
         tmpclf = GridSearchCV(self.clf, self.listParam, scoring='balanced_accuracy', n_jobs=-1)
-        tmpclf.fit(self.X_train, self.Y_train.ravel())
+        a,b = self.prepro.fit_transform(self.X_train, self.Y_train)
+        tmpclf.fit(a,b)
         # print(tmpclf.best_params_)
         self.bestParam = tmpclf.best_params_
         self.bestScore = tmpclf.best_score_
@@ -240,3 +240,24 @@ class test(BaseEstimator):
             print("test2 bon")
         else:
             print("Problème sur classifieur ou ses paramètres")
+
+
+if __name__ == '__main__':
+
+    '''
+        D = DataManager('plankton', '../public_data', replace_missing=True)
+    X = D.data['X_train']
+    Y = D.data['Y_train'].ravel()
+
+
+
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=42)
+    metric_name, scoring_function = get_metric()
+
+    pa = {'n_estimators': [310,315, 320,325, 330], 'warm_start': (True, False), 'bootstrap': (True, False), 'random_state' : [42]}
+    #x2, y2 = Preprocessor.fit_transform(X_train, Y_train)
+    B  = BestParam(RandomForestClassifier(), pa, X_train, Y_train)
+    B.train()
+    print("Meilleurs param :", B.bestParam)
+    print("Meilleur score :" , B.bestScore)
+    '''
