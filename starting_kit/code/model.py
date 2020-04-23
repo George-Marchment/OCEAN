@@ -3,30 +3,26 @@
 """
 Created on Fri Mar 27 17:49:23 2020
 @author: Jérôme, Pierre, George, Raphaël, Paul, Luqman
-Last revised: April 4, 2020
+Last revised: April 23, 2020
 Revision History :
    April 4: Raphaël and Paul
 We clearly improve all our class,
 We also add unit test
+
+    April 23 : Paul
+Remove a useless print (used as test)
+Improve import
 """
 
 import pickle
-import warnings
 from os.path import isfile
 
-import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 
 from preprocessor import Preprocessor
 from sklearn.base import BaseEstimator
 
-warnings.simplefilter(action='ignore', category=FutureWarning)
-sns.set()
-
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
-    # Note: if zDataManager is not ready, use the mother class DataManager
 
 
 class model(BaseEstimator):
@@ -41,13 +37,12 @@ We create our model we supposed is the best one with a given classifier with its
         @param : the parameters associated with the classifier
         """
         self.clf = classifier
-        # self.clf = clf.set_params(**param)
-        # self.param = param
         self.is_trained = False
         self.n_components = 70
         self.prepro = prepro
         # self.pipe = Pipeline([('prepro',Preprocessor()),
         #                      ('clf',classifier)])
+        # The pipelin above was not working so we removed it and used the prepro without pipeline
 
     def fit(self, X, Y):
         """
@@ -67,7 +62,7 @@ We create our model we supposed is the best one with a given classifier with its
         @y : the labels of our training set
         """
         X, Y = self.prepro.transform(X, Y)
-        print(" X : ", X.shape, " Y : ", Y.shape)
+        #print(" X : ", X.shape, " Y : ", Y.shape) -> We printed it because we had size problem while using prepro
         return X, Y
 
     def fit_transform(self, X, Y, nbPCAFeatures=None):
@@ -97,7 +92,6 @@ We create our model we supposed is the best one with a given classifier with its
         return self.pipe.predict_proba(X)
 
     def printScore(self, scoringFunct, X, y):
-        print("AAAAAAAAAAAA")
         print(scoringFunct(X, y))
 
     def save(self, path="./"):
