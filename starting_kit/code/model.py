@@ -28,7 +28,7 @@ class model(BaseEstimator):
 We create our model we supposed is the best one with a given classifier with its parameters
 """
 
-    def __init__(self, classifier=RandomForestClassifier(n_estimators=320, bootstrap=False, warm_start=True, random_state=42), prepro=Preprocessor()):
+    def __init__(self, classifier=RandomForestClassifier(n_estimators=320, bootstrap=False, warm_start=True), prepro=Preprocessor()):
         """
         Initialisation of the model
         @clf : the classifier to initialize
