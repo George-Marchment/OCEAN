@@ -12,9 +12,20 @@ We also add unit test
     April 23 : Paul
 Remove a useless print (used as test)
 Improve import
+
+
+USAGE:
+python preprocessing.py input_dir output_dir
+
+input_dir: directory in which the data lie, in AutoML format
+output_dir: results
+
+
+
 """
 
 import pickle
+import os
 from os.path import isfile
 
 from sklearn.ensemble import RandomForestClassifier
@@ -244,8 +255,18 @@ class test(BaseEstimator):
 
 if __name__ == '__main__':
 
+
+    if len(argv) == 1:  # Use the default input and output directories if no arguments are provided
+        input_dir = "../public_data"
+        output_dir = "../results"
+    else:
+        input_dir = argv[1]
+        output_dir = argv[2]
+
+    basename = 'plankton'
+
     '''
-        D = DataManager('plankton', '../public_data', replace_missing=True)
+        D = DataManager(basename, input_dir, replace_missing=True)
     X = D.data['X_train']
     Y = D.data['Y_train'].ravel()
 
